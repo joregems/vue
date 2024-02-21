@@ -74,7 +74,7 @@ async function isAuth(req, res, next) {
   }
 }
 
-app.post('/users', isAuth, async (req, res) => {
+app.post('/users', async (req, res) => {
   const { name, password, email, role } = req.body;
   try {
     const hash = await hashPassword(password);

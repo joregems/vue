@@ -1,15 +1,15 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
-
+const env = process.env
 const credentials = {
-  database: 'backend',
+  database: env.POSTGRES_DB,
   dialect: 'postgres',
-  username: 'backend',
-  password: 'das!"das@!#~!"&',
-  host: 'db',
+  username: env.POSTGRES_USER,
+  password: env.POSTGRES_PASSWORD,
+  host: env.POSTGRES_HOST,
 }
+module.exports.credentials=credentials
 
 async function connect(credentials, close=false, mode='connect') {
-
   response = null
   error = null  
   const sequelize = new Sequelize(
