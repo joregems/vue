@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '@/config.json'
+import { useAuthStore } from '@/stores/AuthStore';
 
 export default axios.create({
   withCredentials: config.axios.withCredentials,
@@ -33,3 +34,8 @@ export const useInterceptors = (axiosToIntercept)=>{
     }
   )
 }
+
+// export const useCheckLogin = async (axios_for_use)=>{
+//   const user = await axios_for_use.post('/check')
+//   const store = useAuthStore();
+// }

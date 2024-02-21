@@ -9,36 +9,28 @@
       <v-btn type="submit" block class="mt-2">Submit</v-btn>
     </v-form>
   </v-sheet>
-  <button @click="click">clicjeame</button>
 </template>
 <script setup>
-import { ref } from 'vue';
-import { useUserStore } from '@/stores/user'
-const store = useUserStore();
-import axios from '../axios';
-import { useInterceptors } from '../axios';
-useInterceptors(axios);
+import { ref, watch } from 'vue';
+import { useAuthStore } from '@/stores/AuthStore'
+import axios from '@/axios';
+import { useInterceptors } from '@/axios';
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia';
+const router = useRouter()
+const authStore = useAuthStore();
 
+useInterceptors(axios);
 const DEBUG = process.env.NODE_ENV === "development";
 
 const form = ref({
   email: '',
   password: '',
 })
-function submit() {
-  axios
-    .post('login', form.value)
-    .then((response) => alert(JSON.stringify(response.data)))
-}
-function click() {
-  axios
-    .get('users')
-    .then((response) => {
-      alert(JSON.stringify(response))
-    })
-    .catch((error) => {
-      alert(JSON.stringify(error))
-    })
 
-}
+function submit() {
+  authStore.$login(form.value)
+  router.push({name:"home"})
+  }
+
 </script>

@@ -1,7 +1,6 @@
 <template>
   <h3>
     <button @click="cambiar_buttom">
-      butommm
     </button>
     <div v-if="show"> chess</div>
   </h3>
@@ -35,7 +34,6 @@
 
   import { ref, computed } from 'vue';
   import { productos } from './datos';
-  import Modal from './Modal.vue'
   const props = defineProps(['msg'])
   let show = ref(props.msg)
   function capitalizeFirstLetter(string) {

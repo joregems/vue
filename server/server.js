@@ -1,16 +1,16 @@
 // 'use strict';
 const cors = require('cors');
 const express = require('express');
-const { sequelize, User, Post } = require('./models')
+const { sequelize, User, Post, Product } = require('./models')
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const env = process.env
+const DEFAULT_EXPIRE_TOKEN=300
 const os = require('os');
 const { hashPassword, comparePassword } = require('./src/encript')
 // Constants
 const PORT = 8080;
 const HOST = '0.0.0.0';
-
 // App
 const app = express();
 // Add headers before the routes are defined
@@ -22,20 +22,14 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
-// app.get('/', (req, res) => {
-//   res.send('Hello World');
-// });
-// app.get('/about', (req, res) => {
-//   res.send('chesss!!!');
-// });
 
 const create_token = async (obj) => {
-  obj.expire = obj.expire ?? 30
+  obj.expire = obj.expire ?? DEFAULT_EXPIRE_TOKEN
   obj.type = obj.type ?? "access"
   const token = jwt.sign({
     ...obj.data
-  }, env.TOKEN_SECRET, { expiresIn: obj.expire })
-  return token
+  }, env.TOKEN_SECRET, { expiresIn: obj.expire });
+  return token;
 }
 
 const handleRefreshToken = async (req, res) => {
@@ -47,7 +41,7 @@ const handleRefreshToken = async (req, res) => {
       // expire:30
     })
     res.cookie('access_token', access_token);
-    res.json()
+    res.json();
   }
   catch (err){
     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError)
@@ -56,7 +50,7 @@ const handleRefreshToken = async (req, res) => {
     res.status(403)
   res.json(err)
   }
-  return req, res
+  return req, res;
 }
 
 async function isAuth(req, res, next) {
@@ -80,7 +74,7 @@ async function isAuth(req, res, next) {
   }
 }
 
-app.post('/users', async (req, res) => {
+app.post('/users', isAuth, async (req, res) => {
   const { name, password, email, role } = req.body;
   try {
     const hash = await hashPassword(password);
@@ -90,8 +84,9 @@ app.post('/users', async (req, res) => {
     console.log(err);
     res.status(500).json(err.errors);
   }
-  return res
+  return res;
 });
+
 app.post('/posts', async (req, res) => {
   const { body, userUuid } = req.body;
   try {
@@ -102,8 +97,22 @@ app.post('/posts', async (req, res) => {
     console.log(err);
     res.status(500).json(err.errors);
   }
-  return res
+  return res;
 });
+
+//create product
+app.post('/products', isAuth, async (req, res) => {
+  const { name, description, price } = req.body;
+  try {
+    const product = await Product.create({ name, description, price }) 
+    res.json(product);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err.errors);
+  }
+  return res;
+});
+
 app.post('/refresh', async (req, res) => {
   req, res = handleRefreshToken(req, res)
   return res;
@@ -150,6 +159,13 @@ app.post('/login', async (req, res) => {
   return res;
 });
 
+app.get('/logout', isAuth, async (req, res) => {
+  res.clearCookie("access_token");
+  res.clearCookie("refresh_token");
+  res.end();
+})
+
+
 app.get('/posts', async (req, res) => {
   try {
     // const posts = await Post.findAll({include: [User]});
@@ -173,9 +189,24 @@ app.get('/users', isAuth, async (req, res) => {
   return res
 })
 
-app.get('/check', isAuth, async (req, res) => {
+app.get('/products', isAuth, async (req, res) => {
   try {
-    res.json(req.creds)
+    const products = await Product.findAll()
+    res.json(products)
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: 'Something whent wrong' })
+  }
+  return res
+})
+
+app.post('/check', isAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({
+      where: { uuid: req.creds.uuid }
+    })
+    res.json({name:user.name, role:user.role})
+    
   } catch (err) {
     console.log(err)
     res.status(500).json({ error: 'Something whent wrong' })
