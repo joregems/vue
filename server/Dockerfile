@@ -5,7 +5,5 @@ WORKDIR /usr/src/app
 RUN apt-get update -y
 RUN npm update -g npm
 RUN npm install -g sequelize-cli
-COPY ./package*.json ./
-COPY ./entrypoint.sh ./
-
+COPY ./ ./
 RUN npm install
