@@ -6,7 +6,9 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const {credentials} = require('../src/sequelize.js')
-const config = require(__dirname + '/../config/config.json')[mode];
+const config = require(__dirname + '/../config/config')[mode];
+
+console.log(config)
 
 const db = {};
 let with_credentials=false
