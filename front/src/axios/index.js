@@ -1,11 +1,8 @@
 import axios from 'axios';
-import config from '@/config.json'
+import config from '@/config'
 import { useAuthStore } from '@/stores/AuthStore';
 
-export default axios.create({
-  withCredentials: config.axios.withCredentials,
-  baseURL: config.axios.URLBASE
-})
+export default axios.create(config["axios"])
 export const useInterceptors = (axiosToIntercept)=>{
   const refresh = async () => {
     axiosToIntercept

@@ -22,7 +22,7 @@ const authStore = useAuthStore();
 
 useInterceptors(axios);
 const DEBUG = process.env.NODE_ENV === "development";
-
+console.log(process.env.NODE_ENV,"---------------")
 const form = ref({
   email: '',
   password: '',
