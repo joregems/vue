@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('authStore', () => {
         is_logged.value = true
         loading.value = false
       })
+      .catch((error)=>{console.log(error)})
     }
   }
   async function $logout() {
