@@ -8,8 +8,6 @@ const basename = path.basename(__filename);
 const {credentials} = require('../src/sequelize.js')
 const config = require(__dirname + '/../config/config')[mode];
 
-console.log(config)
-
 const db = {};
 let with_credentials=false
 if (process.env.NODE_ENV){
@@ -35,7 +33,7 @@ fs
     );
   })
   .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    const model = require(path.join(__dirname, file));
     db[model.name] = model;
   });
 

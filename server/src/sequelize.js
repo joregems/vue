@@ -1,17 +1,15 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const env = process.env
-const credentials = {
-  database: env.POSTGRES_DB,
-  dialect: 'postgres',
-  username: env.POSTGRES_USER,
-  password: env.POSTGRES_PASSWORD,
-  host: env.POSTGRES_HOST,
-}
-module.exports.credentials=credentials
+const mode = process.env.NODE_ENV || 'development';
+const credentials = require(__dirname + '/../config/config')[mode];
 
-async function connect(credentials, close=false, mode='connect') {
+
+module.exports.credentials = credentials
+
+
+async function connect(credentials, close = false, mode = 'connect') {
   response = null
-  error = null  
+  error = null
   const sequelize = new Sequelize(
     credentials
   );
@@ -23,36 +21,27 @@ async function connect(credentials, close=false, mode='connect') {
   catch (error_) {
     error = 'Unable to connect to the database:'
   }
-  if(close){
+  if (close) {
     await sequelize.close()
   }
-  switch(mode){
+  switch (mode) {
     case 'check':
-        return {response, error}
-      case 'connect':
-        return sequelize
+      return { response, error }
+    case 'connect':
+      return sequelize
   }
 }
-module.exports.connect=connect
-function create_table(sequelize_con) {
-  // try {
-  //   sequelize.authenticate();
-  //   console.log('Connection has been established successfully.');
-  // } catch (error) {
-  //   console.error('Unable to connect to the database:', error);
-  // }
+module.exports.connect = connect
 
-  // sequelize.authenticate().then(() => {
-  //   console.log('Connection has been established successfully.');
-  // }).catch((error) => {
-  //   console.error('Unable to connect to the database: ', error);
-  // });
+
+//crear tabla, ejemplo
+function create_table(sequelize_con) {
   const Book = sequelize_con.define("books", {
-    // id: {
-    //   type: DataTypes.INTEGER,
-    //   autoIncrement: true,
-    //   primaryKey: true
-    // },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
+    },
     title: {
       type: DataTypes.STRING,
       allowNull: false
@@ -68,14 +57,16 @@ function create_table(sequelize_con) {
       type: DataTypes.INTEGER,
     }
   });
-
 };
+
+
+//create a table called Books if is executed directly
 main = async () => {
   sequalize_c = await connect(credentials);
-  await create_table(sequelize_con=sequalize_c)
+  await create_table(sequelize_con = sequalize_c)
 };
+
 
 if (require.main === module) {
   main();
-
 }

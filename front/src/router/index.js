@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import SignIn from '@/components/SignIn.vue'
+import SignUp from '@/components/SignUp.vue'
 import LogOut from '@/components/LogOut.vue'
 import Users from '@/components/Test/Users.vue'
 import { watch } from 'vue'
@@ -21,6 +22,8 @@ const enterSignin = async (to, from, next) => {
   })
   next()
 }
+
+const list_allowed_directions = ['signin', 'signup']
 
 const signIncnf= {
   component: SignIn,
@@ -45,6 +48,12 @@ const router = createRouter({
       name: 'login',
       ...signIncnf
     },
+    {
+      path: '/signUp',
+      name: 'signup',
+      component: SignUp,
+    
+    },    
     {
       path: '/logout',
       name: 'logout',
@@ -74,7 +83,7 @@ router.beforeEach(async (to, from, next) => {
 
   await authStore.$check_logged();
 
-  if (!is_logged.value && to.name != 'signin') {
+  if (!is_logged.value && !list_allowed_directions.includes(to.name)) {
     next({ name: 'signin' });
     return
   }

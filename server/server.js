@@ -5,25 +5,21 @@ const { sequelize, User, Post, Product } = require('./models')
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const env = process.env
-const DEFAULT_EXPIRE_TOKEN=300
 const os = require('os');
 const { hashPassword, comparePassword } = require('./src/encript')
 const PORT = 8080;
 const HOST = '0.0.0.0';
+
+
 // App
 const app = express();
+
+
 // Add headers before the routes are defined
 app.use(cors({
   credentials: true,
-  origin: env.ORIGIN
+  origin: env.FRONT_HOST
 }));
-// app.use(cors({
-//   origin: "*",
-//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//   preflightContinue: false,
-//   optionsSuccessStatus: 204,
-//   credentials: true
-// }));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -34,16 +30,17 @@ const cookies_opt = {
   sameSite: process.env.NODE_ENV !== "development" ? 'none':'strict'
 }
 
-
 ///create token
 const create_token = async (obj) => {
-  obj.expire = obj.expire ?? DEFAULT_EXPIRE_TOKEN
+  obj.expire = obj.expire ?? parseInt(env.DEFAULT_EXPIRE_TOKEN)
   obj.type = obj.type ?? "access"
   const token = jwt.sign({
     ...obj.data
   }, env.TOKEN_SECRET, { expiresIn: obj.expire });
   return token;
 }
+
+
 //handle token refresh
 const handleRefreshToken = async (req, res) => {
   const token = req.cookies.refresh_token;
@@ -65,6 +62,8 @@ const handleRefreshToken = async (req, res) => {
   }
   return req, res;
 }
+
+
 //middleware for check if is auth
 async function isAuth(req, res, next) {
   const all_correct = (data, req, res, next) => {
@@ -134,7 +133,7 @@ app.post('/login', async (req, res) => {
         uuid: user.uuid
       },
       type: "refresh",
-      expire: 24 * 60 * 60
+      expire: parseInt(env.DEFAULT_EXPIRE_REFRESH_TOKEN)
     })
     res.cookie('access_token', access_token, cookies_opt);
     res.cookie('refresh_token', refresh_token, cookies_opt);
@@ -162,8 +161,7 @@ app.get('/logout', isAuth, async (req, res) => {
 app.post('/users', async (req, res) => {
   const { name, password, email, role } = req.body;
   try {
-    const hash = await hashPassword(password);
-    const user = await User.create({ name, password: hash, email, role });
+    const user = await User.create({ name, password, email, role });
     res.json(user);
   } catch (err) {
     console.log(err);
@@ -171,6 +169,7 @@ app.post('/users', async (req, res) => {
   }
   return res;
 });
+
 
 // read user
 app.get('/users', isAuth, async (req, res) => {
@@ -184,6 +183,7 @@ app.get('/users', isAuth, async (req, res) => {
   return res
 })
 
+
 //update user
 app.put('/users/:uuid', async (req, res) => {
   const uuid = req.params.uuid;
@@ -194,7 +194,6 @@ app.put('/users/:uuid', async (req, res) => {
     })
     if (!user)
       throw "something went wrong"
-
     await user.update({ ...user_to_replace})
     res.json(user)
   } catch (err) {
@@ -203,6 +202,7 @@ app.put('/users/:uuid', async (req, res) => {
   }
   return res
 });
+
 
 //delete user
 app.delete('/users/:uuid', async (req, res) => {
@@ -223,6 +223,7 @@ app.delete('/users/:uuid', async (req, res) => {
   return res
 });
 
+
 //find user
 app.get('/users/:uuid', async (req, res) => {
   const uuid = req.params.uuid
@@ -242,9 +243,6 @@ app.get('/users/:uuid', async (req, res) => {
 });
 
 
-
-
-
 app.post('/posts', async (req, res) => {
   const { body, userUuid } = req.body;
   try {
@@ -262,7 +260,11 @@ app.post('/posts', async (req, res) => {
 app.get('/posts', async (req, res) => {
   try {
     // const posts = await Post.findAll({include: [User]});
-    const posts = await Post.findAll({ include: ['user'] });
+    const posts = await Post.findAll({
+      // include: ['user']
+      raw : true // <--- HERE
+
+      });
     res.json(posts)
   } catch (err) {
     console.log(err)
