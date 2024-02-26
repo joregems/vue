@@ -21,27 +21,30 @@ const menuItems = [
 <template>
   <v-app-bar>
     <v-app-bar-nav-icon></v-app-bar-nav-icon>
-    <v-toolbar-title>Vuetify</v-toolbar-title>
+    <v-toolbar-title>App</v-toolbar-title>
     <v-spacer></v-spacer>
-    <router-link to="/logout">
-      <v-btn icon>
-        <v-icon>mdi-export</v-icon>
-      </v-btn>
-    </router-link>
-    <router-link @click="() => {
-      console.log('is_logged, loading, user', is_logged, loading, user);
-      authStore.$check_logged();
-    }" to="/">
-      <v-btn icon>
-        <v-icon>mdi-export</v-icon>
-      </v-btn>
-    </router-link>
-    <router-link to="/about">
-      <v-btn icon>
-        <v-icon>mdi-ab-testing</v-icon>
-      </v-btn>
-    </router-link>
     <div v-if="is_logged">
+      <router-link to="/logout">
+        <v-btn icon>
+          <v-icon>mdi-logout</v-icon>
+        </v-btn>
+      </router-link>
+    </div>
+    <div v-if="!is_logged">
+      <router-link to="/signin">
+        <v-btn icon>
+          <v-icon>mdi-lock-open</v-icon>
+        </v-btn>
+      </router-link>
+    </div>
+    <div v-if="!is_logged">
+      <router-link to="/signup">
+        <v-btn icon>
+          <v-icon>mdi-exit-to-app</v-icon>
+        </v-btn>
+      </router-link>
+    </div>
+    <!-- <div v-if="is_logged">
       {{ "is logged: " + is_logged }}
 
       <router-link to="/signin">
@@ -49,6 +52,6 @@ const menuItems = [
           <v-icon>mdi-lock-open</v-icon>
         </v-btn>
       </router-link>
-    </div>
+    </div> -->
   </v-app-bar>
 </template>

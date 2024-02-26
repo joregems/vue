@@ -1,4 +1,6 @@
 'use strict';
+const { user_model } = require('../models/user');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {

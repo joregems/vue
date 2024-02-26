@@ -4,7 +4,7 @@ const {
 } = require('sequelize');
 const { hashPassword } = require('../src/encript');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports.model = (sequelize, DataTypes) => {
   const user_model={
     uuid: {
       type: DataTypes.UUID,
@@ -13,6 +13,14 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate:{
+        checkEmptyName(name) {
+          if(name===''){
+            throw new Error('name must not be empty');
+          }
+
+        }
+      }
     },
     password: {
       type: DataTypes.STRING,
@@ -53,9 +61,19 @@ module.exports = (sequelize, DataTypes) => {
     role: {
       type: DataTypes.ENUM('admin', 'user'),
       allowNull: false,
+      validate: {
+        checkRole(role){
+          const allowed_roles= ['admin', 'user']
+          if (!allowed_roles.includes(role)){
+            throw new Error('Must be an allowed role: '+allowed_roles.toString().replace(",",", "));
+          }
+
+        }
+      }
     }
   
   }
+  module.exports.fields = user_model;
   class User extends Model {
     /**
      * Helper method for defining associations.

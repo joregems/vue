@@ -8,6 +8,8 @@
       </v-text-field>
       <v-btn type="submit" block class="mt-2">Submit</v-btn>
     </v-form>
+    <v-btn @click='()=>{router.push({name:"signup"})}' block class="mt-2">singUp</v-btn>
+
   </v-sheet>
 </template>
 <script setup>

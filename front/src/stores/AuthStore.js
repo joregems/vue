@@ -27,6 +27,14 @@ export const useAuthStore = defineStore('authStore', () => {
       .catch((error)=>{console.log(error)})
     }
   }
+
+  async function $signup(data) {
+    let respons = await axios.post('users', data);
+    if (is_empty(user.value)){}
+
+    return respons;
+  }
+
   async function $logout() {
     axios.get('logout').then((response)=>{
       $reset();
@@ -53,5 +61,5 @@ export const useAuthStore = defineStore('authStore', () => {
     return res
 
   }
-  return { user, is_logged, loading, $login, $check_logged, $logout, $reset}
+  return { user, is_logged, loading, $login, $signup, $check_logged, $logout, $reset}
 })
