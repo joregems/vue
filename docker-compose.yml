@@ -9,7 +9,7 @@ services:
     restart: always
     volumes:
       - ./front:/app
-    command: npm run dev -- --host
+    command: sh entrypoint.sh
 
   db:
     image: postgres:16-alpine
