@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+// import UserView from '@/views/UserView.vue'
 import SignIn from '@/components/SignIn.vue'
 import SignUp from '@/components/SignUp.vue'
 import LogOut from '@/components/LogOut.vue'
 import Users from '@/components/Test/Users.vue'
+import UserListView from '@/views/UserListView.vue'
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Reyes } from "@/components/Test/Reyes"
@@ -67,6 +69,12 @@ const router = createRouter({
       component: Users
     },
     {
+      path: '/userlist',
+      name: 'userlist',
+      component: UserListView,
+      props: true
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting
@@ -90,7 +98,6 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   watch(is_logged, async (new_is_logged, old_is_logged) => {
-    console.log("watched", new_is_logged, old_is_logged, !loading.value, "loading")
       if (!new_is_logged) {
         await router.push({ name: 'signin' })
       }

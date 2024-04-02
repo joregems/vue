@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build&&echo '/*    /index.html    200' > ./dist/_redirects",
     "preview": "vite preview",
     "test:unit": "vitest",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
@@ -31,7 +31,6 @@
     "eslint-plugin-vue": "^9.17.0",
     "jsdom": "^22.1.0",
     "prettier": "^3.0.3",
-    "vite": "^4.0.0",
     "vitest": "^0.34.4"
   }
 }

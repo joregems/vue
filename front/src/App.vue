@@ -10,10 +10,10 @@ const router = useRouter()
 const logo = "@/assets/logo.svg"
 import { useAuthStore } from '@/stores/AuthStore'
 const authStore = useAuthStore();
+import { storeToRefs } from 'pinia'
 const {is_logged, loading, user} = storeToRefs(authStore)
 router.addRoute({ path: '/about2', component: HomeView })
 const sidebar = ref(false);
-import { storeToRefs } from 'pinia'
 
 const appTitle = 'magic';
 const menuItems = [

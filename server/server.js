@@ -6,13 +6,79 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const env = process.env
 const os = require('os');
-const { hashPassword, comparePassword } = require('./src/encript')
+const { comparePassword } = require('./src/encript')
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
+console.log(env)
 
 // App
 const app = express();
+
+
+const ckeck_token = (req) => {
+
+}
+
+const TryCatchWrapper = (target, propertyKey, descriptor) => {
+  const fn = descriptor.value;
+  descriptor.value = (...args) => {
+    try {
+      fn.apply(this, args);
+    } catch (error) {
+      throw (error);
+    }
+  };
+  return descriptor;
+};
+
+const TryCatchWrapperAs = (target, propertyKey, descriptor) => {
+  const fn = descriptor.value;
+  descriptor.value = async (...args) => {
+    try {
+      await fn.apply(this, args);
+    } catch (error) {
+      throw (error);
+    }
+  };
+  return descriptor;
+};
+
+
+// const get_actual_user = async (req, res) => {
+//   try {
+//     const token = verify_token_from_req
+
+//   }
+//   catch (error) {
+//     throw (error)
+//   }
+
+//   isAuth(req, res)
+
+// }
+// const get_actual_user = async (req) => {
+//   try {
+//     const token = verify_token_from_req(req);
+//     const user_info = jwt.verify(token, env.TOKEN_SECRET);
+//     const user = await User.findOne({ where: { uuid:user_info.uuid } })
+//   }
+//   catch (error) {
+//     throw (error)
+//   }
+//   isAuth(req, res)
+
+// }
+
+
+
+
+const verify_token_from_req = (req) => {
+  const token = req.cookies.access_token;
+  if (!token)
+    throw "there is no access token";
+  return token;
+}
 
 
 // Add headers before the routes are defined
@@ -27,18 +93,27 @@ app.use(cookieParser());
 const cookies_opt = {
   secure: process.env.NODE_ENV !== "development",
   httpOnly: true,
-  sameSite: process.env.NODE_ENV !== "development" ? 'none':'strict'
+  sameSite: process.env.NODE_ENV !== "development" ? 'none' : 'strict'
 }
 
 ///create token
 const create_token = async (obj) => {
-  obj.expire = obj.expire ?? parseInt(env.DEFAULT_EXPIRE_TOKEN)
-  obj.type = obj.type ?? "access"
+  const expire = !isNaN(obj.expire) ? obj.expire: parseInt(env.DEFAULT_EXPIRE_TOKEN);
+  obj.expire =  expire;
+  obj.type = obj.type ?? "access";  
+  try{
   const token = jwt.sign({
     ...obj.data
   }, env.TOKEN_SECRET, { expiresIn: obj.expire });
-  return token;
+  return token;    
+  }
+  catch(error){
+    console.log(error, obj);
+    throw error;
+  }
+
 }
+
 
 
 //handle token refresh
@@ -53,48 +128,45 @@ const handleRefreshToken = async (req, res) => {
     res.cookie('access_token', access_token, cookies_opt);
     res.json();
   }
-  catch (err){
+  catch (err) {
     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError)
       res.status(401)
     else
-    res.status(403)
-  res.json(err)
+      res.status(403)
+    res.json(err)
   }
   return req, res;
 }
 
 
 //middleware for check if is auth
-async function isAuth(req, res, next) {
-  const all_correct = (data, req, res, next) => {
-    req.creds = data;
+async function isAuth( req, res, next) {
+  const inject_creds_to_req = (data, req, res, next) => {
+    req.creds = data;//inject creds to request
     return next();
   }
-  const token = req.cookies.access_token;
+
   try {
-    if (!token)
-      throw "there is no access token";
+    const token = verify_token_from_req(req);
     const data = jwt.verify(token, env.TOKEN_SECRET);
-    return all_correct(data, req, res, next);
+    return inject_creds_to_req(data, req, res, next);
   } catch (err) {
     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError)
       res.status(401)
     else
-    res.status(403)
-  res.json(err)
+      res.status(403)
+    res.json(err)
     return res;
   }
 }
-
-
+// const isAuth=TryCatchWrapper(isAuth3);
 //check if is auth the user
 app.post('/check', isAuth, async (req, res) => {
   try {
     const user = await User.findOne({
       where: { uuid: req.creds.uuid }
     })
-    res.json({name:user.name, role:user.role})
-    
+    res.json({ uuid: user.uuid, name: user.name, role: user.role })
   } catch (err) {
     console.log(err)
     res.status(500).json({ error: 'Something whent wrong' })
@@ -111,16 +183,18 @@ app.post('/refresh', async (req, res) => {
 //login user
 app.post('/login', async (req, res) => {
   const { password, email } = req.body;
+  console.log(password, email, "body")
   try {
     const user = await User.findOne({ where: { email } })
+    console.log(password, user.password, "compare")
     const valid_password = await comparePassword(password, user.password);
     if (!valid_password)
       throw { errors: "user or password don't match" };
 
     const data = {
-        name: user.name,
-        uuid: user.uuid
-      }
+      name: user.name,
+      uuid: user.uuid
+    }
     const access_token = await create_token({
       data: {
         name: user.name,
@@ -161,7 +235,7 @@ app.get('/logout', isAuth, async (req, res) => {
 app.post('/users', async (req, res) => {
   const { name, password, email, role } = req.body;
   try {
-    const user = await User.create({ name, password, email, role });
+    const user = await User.create({ name, password, email, role: "user" });
     res.json(user);
   } catch (err) {
     console.log(err);
@@ -185,8 +259,9 @@ app.get('/users', isAuth, async (req, res) => {
 
 
 //update user
-app.put('/users/:uuid', async (req, res) => {
+app.put('/users/:uuid', isAuth, async (req, res) => {
   const uuid = req.params.uuid;
+  console.log(req.body)
   const user_to_replace = req.body;
   try {
     const user = await User.findOne({
@@ -194,7 +269,7 @@ app.put('/users/:uuid', async (req, res) => {
     })
     if (!user)
       throw "something went wrong"
-    await user.update({ ...user_to_replace})
+    await user.update({ ...user_to_replace })
     res.json(user)
   } catch (err) {
     console.log(err)
@@ -205,7 +280,7 @@ app.put('/users/:uuid', async (req, res) => {
 
 
 //delete user
-app.delete('/users/:uuid', async (req, res) => {
+app.delete('/users/:uuid', isAuth, async (req, res) => {
   const uuid = req.params.uuid;
   try {
     const user = await User.findOne({
@@ -262,9 +337,9 @@ app.get('/posts', async (req, res) => {
     // const posts = await Post.findAll({include: [User]});
     const posts = await Post.findAll({
       // include: ['user']
-      raw : true // <--- HERE
+      raw: true // <--- HERE
 
-      });
+    });
     res.json(posts)
   } catch (err) {
     console.log(err)
@@ -279,7 +354,7 @@ app.get('/posts', async (req, res) => {
 app.post('/products', isAuth, async (req, res) => {
   const { name, description, price } = req.body;
   try {
-    const product = await Product.create({ name, description, price }) 
+    const product = await Product.create({ name, description, price })
     res.json(product);
   } catch (err) {
     console.log(err);

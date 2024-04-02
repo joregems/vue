@@ -22,7 +22,7 @@ const menuItems = [
   <v-app-bar>
     <v-app-bar-nav-icon></v-app-bar-nav-icon>
     <v-toolbar-title>App</v-toolbar-title>
-    <v-spacer></v-spacer>
+    <v-spacer>{{user}}</v-spacer>
     <div v-if="is_logged">
       <router-link to="/logout">
         <v-btn icon>

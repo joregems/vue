@@ -1,25 +1,18 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 const { hashPassword } = require('../src/encript');
-
-module.exports.model = (sequelize, DataTypes) => {
-  const user_model={
+const get_user_model = (DataTypes) => {
+  const user_mode = {
     uuid: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
     },
-    name: {
+    email: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate:{
-        checkEmptyName(name) {
-          if(name===''){
-            throw new Error('name must not be empty');
-          }
-
-        }
+      unique: true,
+      validate: {
+        isEmail: { msg: 'Must be a valid email' }
       }
     },
     password: {
@@ -32,17 +25,17 @@ module.exports.model = (sequelize, DataTypes) => {
           if (password.length < 8) {
             throw new Error('password must be at least 8 characters long');
           }
-  
+
           // Check for mixed case
           else if (!(password.match(/[a-z]/) && password.match(/[A-Z]/))) {
             throw new Error('password must contain lowercase and uppercase letters');
           }
-  
+
           // Check for numbers
           else if (!password.match(/\d/)) {
             throw new Error('password must include at least one number');
           }
-  
+
           // Check for special characters
           if (!password.match(/[^a-zA-Z\d]/)) {
             throw new Error('password must include at least one special character.');
@@ -50,30 +43,36 @@ module.exports.model = (sequelize, DataTypes) => {
         }
       }
     },
-    email: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       validate: {
-        isEmail: true
+        checkEmptyName(name) {
+          if (name === '') {
+            throw new Error('Name must not be empty');
+          }
+        }
       }
     },
     role: {
       type: DataTypes.ENUM('admin', 'user'),
       allowNull: false,
       validate: {
-        checkRole(role){
-          const allowed_roles= ['admin', 'user']
-          if (!allowed_roles.includes(role)){
-            throw new Error('Must be an allowed role: '+allowed_roles.toString().replace(",",", "));
+        checkRole(role) {
+          const allowed_roles = ['admin', 'user', 'guest']
+          if (!allowed_roles.includes(role)) {
+            throw new Error('Must be an allowed role: ' + allowed_roles.toString().replace(",", ", "));
           }
 
         }
       }
     }
-  
   }
-  module.exports.fields = user_model;
+  return user_mode
+}
+module.exports.get_user_fields = get_user_model;
+module.exports.model = (sequelize, DataTypes) => {
+  const user_model = get_user_model(DataTypes)
   class User extends Model {
     /**
      * Helper method for defining associations.
@@ -85,7 +84,7 @@ module.exports.model = (sequelize, DataTypes) => {
       this.hasMany(Post, { foreignKey: 'userId', as: 'posts' })
     }
     toJSON() {
-      return { ...this.get(), id: undefined, password: undefined }
+      return { ...this.get(), id: undefined, password: undefined, createdAt: undefined, updatedAt: undefined }
     }
   }
   User.init(
@@ -95,7 +94,10 @@ module.exports.model = (sequelize, DataTypes) => {
         //this encrypt the password before store
         afterValidate: async (user, options) => {
           const hash = await hashPassword(user.password);
-          user.password = hash;
+          user.password = hash
+        },
+        beforeUpdate: async (_record, options) => {
+          options.validate = false;
         }
       },
       sequelize,
@@ -104,5 +106,10 @@ module.exports.model = (sequelize, DataTypes) => {
     }
 
   );
+  // const beforeUpdate = function (_record, _options) {
+  //     _options.validate = false;
+  // };
+  // User.addHook('beforeUpdate', beforeUpdate);
+
   return User;
 };
