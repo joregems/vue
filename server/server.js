@@ -6,11 +6,10 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const env = process.env
 const os = require('os');
-const { comparePassword } = require('./src/encript')
+const { comparePassword } = require('./src/encript');
+const { error } = require('console');
 const PORT = 8080;
 const HOST = '0.0.0.0';
-
-console.log(env)
 
 // App
 const app = express();
@@ -18,6 +17,14 @@ const app = express();
 
 const ckeck_token = (req) => {
 
+}
+
+const clear_cookies = (res) => {
+  res.clearCookie("access_token");
+  res.cookie('access_token', "", cookies_opt)
+  res.clearCookie("refresh_token");
+  res.cookie('refresh_token', "", cookies_opt)
+  return res;
 }
 
 const TryCatchWrapper = (target, propertyKey, descriptor) => {
@@ -76,7 +83,10 @@ const TryCatchWrapperAs = (target, propertyKey, descriptor) => {
 const verify_token_from_req = (req) => {
   const token = req.cookies.access_token;
   if (!token)
-    throw "there is no access token";
+    throw {
+      "name": "NoAccessTokenError",
+      "message": "There is no access token"
+    };
   return token;
 }
 
@@ -98,16 +108,16 @@ const cookies_opt = {
 
 ///create token
 const create_token = async (obj) => {
-  const expire = !isNaN(obj.expire) ? obj.expire: parseInt(env.DEFAULT_EXPIRE_TOKEN);
-  obj.expire =  expire;
-  obj.type = obj.type ?? "access";  
-  try{
-  const token = jwt.sign({
-    ...obj.data
-  }, env.TOKEN_SECRET, { expiresIn: obj.expire });
-  return token;    
+  const expire = !isNaN(obj.expire) ? obj.expire : parseInt(env.DEFAULT_EXPIRE_TOKEN);
+  obj.expire = expire;
+  obj.type = obj.type ?? "access";
+  try {
+    const token = jwt.sign({
+      ...obj.data
+    }, env.TOKEN_SECRET, { expiresIn: obj.expire });
+    return token;
   }
-  catch(error){
+  catch (error) {
     console.log(error, obj);
     throw error;
   }
@@ -118,47 +128,61 @@ const create_token = async (obj) => {
 
 //handle token refresh
 const handleRefreshToken = async (req, res) => {
-  const token = req.cookies.refresh_token;
+  const refresh_token = req.cookies.refresh_token;
   try {
-    const data = jwt.verify(token, env.TOKEN_SECRET);
-    const access_token = await create_token({
+    const data = jwt.verify(refresh_token, env.TOKEN_SECRET);
+    const new_access_token = await create_token({
       data: { uuid: data.uuid, name: data.name },
-      // expire:30
     })
-    res.cookie('access_token', access_token, cookies_opt);
+    res.cookie('access_token', new_access_token, cookies_opt);
     res.json();
   }
   catch (err) {
-    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError)
-      res.status(401)
+    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+      res.status(401);
+      err = {
+        "name": "InvalidRefreshToken",
+        "message": "invalid refresh token"
+      }
+      res = clear_cookies(res);
+    }
     else
-      res.status(403)
-    res.json(err)
+      res.status(403);
+    res.json(err);
   }
   return req, res;
 }
 
 
 //middleware for check if is auth
-async function isAuth( req, res, next) {
+async function isAuth(req, res, next) {
   const inject_creds_to_req = (data, req, res, next) => {
     req.creds = data;//inject creds to request
     return next();
   }
-
   try {
     const token = verify_token_from_req(req);
     const data = jwt.verify(token, env.TOKEN_SECRET);
     return inject_creds_to_req(data, req, res, next);
   } catch (err) {
-    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError)
-      res.status(401)
+    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+      res.status(401);
+      err = {
+        "name": "InvalidAccessToken",
+        "message": "Invalid access token"
+      }
+    }
     else
       res.status(403)
     res.json(err)
     return res;
   }
 }
+//find user
+app.get('/check_connection', async (req, res) => {
+  console.log("checking conection")
+  res.sendStatus(200);
+});
 // const isAuth=TryCatchWrapper(isAuth3);
 //check if is auth the user
 app.post('/check', isAuth, async (req, res) => {
@@ -183,10 +207,8 @@ app.post('/refresh', async (req, res) => {
 //login user
 app.post('/login', async (req, res) => {
   const { password, email } = req.body;
-  console.log(password, email, "body")
   try {
     const user = await User.findOne({ where: { email } })
-    console.log(password, user.password, "compare")
     const valid_password = await comparePassword(password, user.password);
     if (!valid_password)
       throw { errors: "user or password don't match" };
@@ -222,12 +244,9 @@ app.post('/login', async (req, res) => {
 
 //logout user
 app.get('/logout', isAuth, async (req, res) => {
-  res.clearCookie("access_token");
-  res.cookie('access_token', "", cookies_opt)
-  res.clearCookie("refresh_token");
-  res.cookie('refresh_token', "", cookies_opt)
+  res = clear_cookies(res);
   res.end();
-})
+});
 
 
 ///////////////////////crud user//////////////////////
@@ -261,7 +280,6 @@ app.get('/users', isAuth, async (req, res) => {
 //update user
 app.put('/users/:uuid', isAuth, async (req, res) => {
   const uuid = req.params.uuid;
-  console.log(req.body)
   const user_to_replace = req.body;
   try {
     const user = await User.findOne({

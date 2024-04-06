@@ -1,30 +1,41 @@
 import axios from 'axios';
 import config from '@/config'
 import { useAuthStore } from '@/stores/AuthStore';
+
 export default axios.create(config["axios"])
-export const useInterceptors = (axiosToIntercept)=>{
+export const useInterceptors = (axiosToIntercept) => {
   const refresh = async () => {
     axiosToIntercept
       .post('/refresh')
+      .catch((error)=>{});
   }
-  axiosToIntercept.interceptors.request.use(
+  const remove_interceptors = (axio, requestIn, responseIn) => {
+    axio.interceptors.request.eject(requestIn);
+    axio.interceptors.response.eject(responseIn);
+
+  }
+  const requestIntercept = axiosToIntercept.interceptors.request.use(
     config => {
-      config.sent = false
+      // config.sent = false
       return config;
     }, (error) => {
-      Promise.reject("error", error)
+      return Promise.reject("error", error);
     }
   )
-  axiosToIntercept.interceptors.response.use(
+  const responseIntercept = axiosToIntercept.interceptors.response.use(
     response => response,
     async (error) => {
       const prevRequest = error?.config;
-      if (error?.response?.status === 401 && !prevRequest?.sent) {
+      if (error?.response?.data?.name=="InvalidAccessToken"&&error?.response?.status === 401 && !prevRequest?.sent) {
         prevRequest.sent = true;
         await refresh();
-        return axiosToIntercept(prevRequest)
-        // axios.interceptors.response.eject(requestIntercept);
-        // axios.interceptors.response.eject(responseIntercept);
+        remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
+        return axiosToIntercept(prevRequest);
+      }
+      if ((error?.response?.data?.name=="NoAccessTokenError"||error?.response?.data?.name=="InvalidRefreshToken")) {
+        remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
+        const authStore = useAuthStore();
+        authStore.$logout();
       }
       return Promise.reject(error);
     }

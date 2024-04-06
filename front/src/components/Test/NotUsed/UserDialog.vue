@@ -71,6 +71,6 @@ onBeforeMount(() => {
 
 const submit = async (obj) => {
   await userStore.$update(obj);
-  await userStore.$get_users();
+  // await userStore.$get_users();
 }
 </script>

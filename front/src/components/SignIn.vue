@@ -6,7 +6,7 @@
       <v-text-field type="password" variant="solo" prepend-inner-icon="mdi-key" v-model="form.password"
         label="Password">
       </v-text-field>
-      <v-btn type="submit" block class="mt-2">Submit</v-btn>
+      <v-btn type="submit" block class="mt-2">Signin</v-btn>
     </v-form>
     <v-btn @click='()=>{router.push({name:"signup"})}' block class="mt-2">singUp</v-btn>
 

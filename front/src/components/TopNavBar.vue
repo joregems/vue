@@ -29,6 +29,11 @@ const menuItems = [
           <v-icon>mdi-logout</v-icon>
         </v-btn>
       </router-link>
+      <router-link to="/userlist">
+        <v-btn icon>
+          <v-icon>mdi-trash-can</v-icon>
+        </v-btn>
+      </router-link>
     </div>
     <div v-if="!is_logged">
       <router-link to="/signin">
@@ -36,6 +41,7 @@ const menuItems = [
           <v-icon>mdi-lock-open</v-icon>
         </v-btn>
       </router-link>
+
     </div>
     <div v-if="!is_logged">
       <router-link to="/signup">

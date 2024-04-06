@@ -83,7 +83,9 @@ async function submit(obj, emit_ps) {
         errors.value = err_to_arr(error.response.data);
       }
       catch (err) {
+        try{
         errors.value = err_to_arr(error.response.data.error.errors);
+        }catch(er){}
       }
     })
 }
