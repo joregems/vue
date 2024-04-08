@@ -2,7 +2,7 @@
 const { Model } = require('sequelize');
 const { hashPassword } = require('../src/encript');
 const get_user_model = (DataTypes) => {
-  const user_mode = {
+  return {
     uuid: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -55,7 +55,7 @@ const get_user_model = (DataTypes) => {
       }
     },
     role: {
-      type: DataTypes.ENUM('admin', 'user'),
+      type: DataTypes.ENUM('admin', 'user', 'guest'),
       allowNull: false,
       validate: {
         checkRole(role) {
@@ -67,8 +67,7 @@ const get_user_model = (DataTypes) => {
         }
       }
     }
-  }
-  return user_mode
+  }; 
 }
 module.exports.get_user_fields = get_user_model;
 module.exports.model = (sequelize, DataTypes) => {
@@ -81,10 +80,10 @@ module.exports.model = (sequelize, DataTypes) => {
      */
     static associate({ Post }) {
       // define association here
-      this.hasMany(Post, { foreignKey: 'userId', as: 'posts' })
+      this.hasMany(Post, { foreignKey: 'userId', as: 'posts' });
     }
     toJSON() {
-      return { ...this.get(), id: undefined, password: undefined, createdAt: undefined, updatedAt: undefined }
+      return { ...this.get(), id: undefined, password: undefined, createdAt: undefined, updatedAt: undefined };
     }
   }
   User.init(

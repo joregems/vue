@@ -1,4 +1,5 @@
 'use strict';
+const { get_product_model } = require('../models/product');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {
@@ -9,22 +10,7 @@ module.exports = {
         primaryKey: true,
         type: DataTypes.INTEGER
       },
-      uuid: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-      },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      price: {
-        type: DataTypes.FLOAT,
-        allowNull: false,
-      },
+      ...get_product_model(DataTypes),
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE

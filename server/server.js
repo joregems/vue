@@ -180,7 +180,7 @@ async function isAuth(req, res, next) {
 }
 //find user
 app.get('/check_connection', async (req, res) => {
-  console.log("checking conection")
+  // console.log("checking conection")
   res.sendStatus(200);
 });
 // const isAuth=TryCatchWrapper(isAuth3);
@@ -267,7 +267,10 @@ app.post('/users', async (req, res) => {
 // read user
 app.get('/users', isAuth, async (req, res) => {
   try {
-    const users = await User.findAll()
+    const users = await User.findAll({
+      include: ['posts'],
+      //raw: true // <--- HERE
+    })
     res.json(users)
   } catch (err) {
     console.log(err)
@@ -353,12 +356,17 @@ app.post('/posts', async (req, res) => {
 app.get('/posts', async (req, res) => {
   try {
     // const posts = await Post.findAll({include: [User]});
-    const posts = await Post.findAll({
-      // include: ['user']
-      raw: true // <--- HERE
+    // const posts = await Post.findAll({
+    //   include: ['user'],
+    //   //raw: true // <--- HERE
 
-    });
-    res.json(posts)
+    // });
+    const users = await User.findAll({
+      include: ['posts'],
+      //raw: true // <--- HERE
+    })
+    res.json(users)
+    // res.json(posts)
   } catch (err) {
     console.log(err)
     res.status(500).json(err.errors)

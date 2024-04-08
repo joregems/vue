@@ -1,16 +1,18 @@
 'use strict';
+const { get_shopping_cart_detail_model } = require('../models/shoppingcartdetail');
+
 /** @type {import('sequelize-cli').Migration} */
-const { get_shopping_cart_model } = require('../models/shoppingcart');
+
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('ShoppingCarts', {
+    await queryInterface.createTable('ShoppingCartDetails', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      ...get_shopping_cart_model(Sequelize),
+      ...get_shopping_cart_detail_model(Sequelize),
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -22,6 +24,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('ShoppingCarts');
+    await queryInterface.dropTable('ShoppingCartDetails');
   }
 };
