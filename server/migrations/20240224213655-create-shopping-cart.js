@@ -3,7 +3,7 @@
 const { get_shopping_cart_model } = require('../models/shoppingcart');
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('ShoppingCarts', {
+    await queryInterface.createTable('ShoppingCart', {
       id: {
         allowNull: false,
         autoIncrement: true,

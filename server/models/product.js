@@ -17,6 +17,7 @@ const get_product_model = (DataTypes) => {
     sku: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true
     },
     categoryId: {
       type: DataTypes.STRING,
@@ -37,13 +38,15 @@ module.exports.model = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(model) {
-      // define association here
+    static associate({ShoppingCart}) {
+      this.belongsToMany(ShoppingCart, { through: 'ShoppingCartDetail',as:'shoppingCarts'})
+
     }
     toJSON() {
       return { ...this.get(),
-        id: undefined, userId: undefined,
-        createdAt: undefined, updatedAt: undefined }
+        id: undefined,
+        createdAt: undefined, updatedAt: undefined
+      }
     }
   }
   Product.init(

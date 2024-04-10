@@ -24,6 +24,16 @@ const menuItems = [
     <v-toolbar-title>App</v-toolbar-title>
     <v-spacer>{{user}}</v-spacer>
     <div v-if="is_logged">
+      <router-link to="/shoppingcart">
+        <v-btn icon>
+          <v-icon>mdi-cart-arrow-down</v-icon>
+        </v-btn>
+      </router-link>
+      <router-link to="/">
+        <v-btn icon>
+          <v-icon>mdi-home-account</v-icon>
+        </v-btn>
+      </router-link>
       <router-link to="/logout">
         <v-btn icon>
           <v-icon>mdi-logout</v-icon>

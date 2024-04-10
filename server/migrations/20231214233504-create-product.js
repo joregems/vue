@@ -3,7 +3,7 @@ const { get_product_model } = require('../models/product');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {
-    await queryInterface.createTable('Products', {
+    await queryInterface.createTable('Product', {
       id: {
         allowNull: false,
         autoIncrement: true,

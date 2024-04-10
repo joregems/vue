@@ -6,10 +6,15 @@ import SignUp from '@/components/SignUp.vue'
 import LogOut from '@/components/LogOut.vue'
 import Users from '@/components/Test/Users.vue'
 import UserListView from '@/views/UserListView.vue'
+import ProductListView from '@/views/ProductListView.vue'
+import ShoppingCartView from '@/views/ShoppingCartView.vue'
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Reyes } from "@/components/Test/Reyes"
 import { useAuthStore } from '@/stores/AuthStore'
+import ShoppingCart from '@/components/shopping/ShoppingCart.vue'
+// import ProductList from '../components/shopping/Products/ProductList.vue'
+// import ProductList from '@/components/shopping/ProductList.vue'
 
 const enterSignin = async (to, from, next) => {
   const authStore = useAuthStore();
@@ -37,7 +42,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: ProductListView
     },
     {
       path: '/signin',
@@ -67,6 +72,11 @@ const router = createRouter({
       path: '/users',
       name: 'users',
       component: Users
+    },
+    {
+      path: '/shoppingcart',
+      name: 'shoppingcart',
+      component: ShoppingCartView
     },
     {
       path: '/userlist',

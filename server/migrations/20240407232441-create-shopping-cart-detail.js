@@ -5,11 +5,11 @@ const { get_shopping_cart_detail_model } = require('../models/shoppingcartdetail
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('ShoppingCartDetails', {
+    await queryInterface.createTable('ShoppingCartDetail', {
       id: {
         allowNull: false,
         autoIncrement: true,
-        primaryKey: true,
+        // primaryKey: true,
         type: Sequelize.INTEGER
       },
       ...get_shopping_cart_detail_model(Sequelize),
