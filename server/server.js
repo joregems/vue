@@ -555,7 +555,8 @@ module.exports.sum = sum;
 //deploying server
 app.listen(PORT, HOST, async () => {
   console.log(`Running on http://${HOST}:${PORT}`);
-  console.log(os.uptime())
-  await sequelize.authenticate()
-  console.log("Database Connected")
+  console.log(os.uptime());
+  await sequelize.sync({force: true});
+  await sequelize.authenticate();
+  console.log("Database Connected");
 });
