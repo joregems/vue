@@ -60,14 +60,5 @@ const menuItems = [
         </v-btn>
       </router-link>
     </div>
-    <!-- <div v-if="is_logged">
-      {{ "is logged: " + is_logged }}
-
-      <router-link to="/signin">
-        <v-btn icon variant="outlined">
-          <v-icon>mdi-lock-open</v-icon>
-        </v-btn>
-      </router-link>
-    </div> -->
   </v-app-bar>
 </template>

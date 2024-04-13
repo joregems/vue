@@ -67,15 +67,13 @@ export const useAuthStore = defineStore('authStore', () => {
 
   }
 
-  async function $check_conection() {
-    axios.get('check_connection')
-      .then((response) => {
-        return true;
-      })
-      .catch((error) => {
-        return false;
-      })
+  async function $is_down_conection() {
+    let status_=false
+    await axios.get('check_connection').then(()=>{status_=false}).catch(()=>{status_=true})
+    return status_
   }
+
+
 
   async function $check_logged() {
     let res = false;
@@ -95,5 +93,5 @@ export const useAuthStore = defineStore('authStore', () => {
     return res
 
   }
-  return { user, is_logged, loading, $check_conection, $login, $signup, $check_logged, $logout, $reset }
+  return { user, is_logged, loading, $is_down_conection, $login, $signup, $check_logged, $logout, $reset }
 })

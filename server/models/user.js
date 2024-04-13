@@ -1,6 +1,6 @@
 'use strict';
 const { Model } = require('sequelize');
-const { hashPassword } = require('../src/encript');
+const { hashPassword } = require('../utils/encript');
 const get_user_model = (DataTypes) => {
   return {
     uuid: {

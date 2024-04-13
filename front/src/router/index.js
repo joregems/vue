@@ -8,9 +8,12 @@ import Users from '@/components/Test/Users.vue'
 import UserListView from '@/views/UserListView.vue'
 import ProductListView from '@/views/ProductListView.vue'
 import ShoppingCartView from '@/views/ShoppingCartView.vue'
+
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Reyes } from "@/components/Test/Reyes"
+import ImageUpload from "@/components/ImageUpload.vue"
+
 import { useAuthStore } from '@/stores/AuthStore'
 import ShoppingCart from '@/components/shopping/ShoppingCart.vue'
 // import ProductList from '../components/shopping/Products/ProductList.vue'
@@ -40,6 +43,11 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/upload',
+      name: 'upload',
+      component: ImageUpload,
+    },
+    {
       path: '/',
       name: 'home',
       component: ProductListView
@@ -60,9 +68,7 @@ const router = createRouter({
       name: 'signup',
       component: SignUp,
       beforeEnter: [enterSignin]
-
-    
-    },    
+    },
     {
       path: '/logout',
       name: 'logout',

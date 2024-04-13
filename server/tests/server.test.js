@@ -1,5 +1,5 @@
 const {sum} = require('../server');
-const {connect} =require('../src/sequelize')
+const {connect} =require('../utils/sequelize')
 
 const c ={
   database: 'backend',

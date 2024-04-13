@@ -30,7 +30,7 @@ const form = ref({
 })
 
 function submit() {
-  authStore.$login(form.value)
+  authStore.$login(form.value).catch((error)=>{console.log(error)})
   router.push({name:"home"})
   }
 

@@ -35,7 +35,7 @@ export const useInterceptors = (axiosToIntercept) => {
       if ((error?.response?.data?.name=="NoAccessTokenError"||error?.response?.data?.name=="InvalidRefreshToken")) {
         remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
         const authStore = useAuthStore();
-        authStore.$logout();
+        authStore.$logout()
       }
       return Promise.reject(error);
     }

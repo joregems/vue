@@ -6,12 +6,53 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const env = process.env
 const os = require('os');
-const { comparePassword } = require('./src/encript');
-const { error } = require('console');
-const { Json } = require('sequelize/lib/utils');
+const { comparePassword } = require('./utils/encript');
+const multer = require('multer')
+const path = require('path')
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
+class MyError extends Error {
+  constructor(name,message) {
+    super();
+    this.name = name;
+    this.message = message;
+  }
+}
+
+// filename: (req,file,cb)=>{
+//   const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
+//   console.log(file)
+//   if (allowed_types.include(file.mimetype)) {
+//     cb(null, Date.now() + path.extname(file.originalname));
+
+//   }
+//   else{
+//     cb(new MyError('NotAllowedType','This file type is not allowed'));
+//   }
+
+
+// }
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images');
+  },
+  filename: (req, file, cb) => {
+    console.log(file)
+    // cb(new MyError('NotAllowedType','This file type is not allowed'));
+    const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
+    console.log(file)
+    if (allowed_types.includes(file.mimetype)) {
+      cb(null, Date.now() + path.extname(file.originalname));
+    }
+    else {
+      cb(new MyError('NotAllowedType','This file type is not allowed'));
+    }
+  }
+
+})
+
+const upload = multer({ storage: storage });
 let users_autenticated = {}
 
 
@@ -176,7 +217,8 @@ async function isAuth(req, res, next) {
   try {
     const token = get_access_token_from_req(req);
     const data = jwt.verify(token, env.TOKEN_SECRET);
-    if (!(users_autenticated[data.uuid] === req.cookies.refresh_token)) {
+    if (!(users_autenticated[data.uuid] === req.cookies.refresh_token)&&users_autenticated!={}) {
+      console.log(users_autenticated);
       throw {
         "name": "UserHasAnotherSession",
         "message": "The user is logged in in another session"
@@ -232,6 +274,17 @@ app.post('/check', isAuth, async (req, res) => {
   return res
 })
 
+//check if is auth the user
+app.post('/uploadtest', upload.single('image'), async (req, res) => {
+  try {
+    res.status(200).json("ches!!!")
+    // throw {message:"blebleble", name:"nanana"};
+  }
+  catch (error) {
+    res.status(500).json({name:error.name, message:error.message})
+  }
+  return res;
+})
 
 //refresh auth token
 app.post('/refresh', async (req, res) => {
@@ -292,7 +345,6 @@ app.post('/users', async (req, res) => {
   try {
     const user = await User.create({ name, password, email, role: "user" });
     await ShoppingCart.create({ name: "Shopping cart", description: "this is shopping cart", userId: user.id });
-
     res.json(user);
   } catch (err) {
     console.log(err);
@@ -419,13 +471,21 @@ app.get('/posts', async (req, res) => {
 
 //create product
 app.post('/products', isAuth, async (req, res) => {
-  const keys = new Set(["name", "description", "sku", "categoryId", "price"])
-  try {
-    check_keys(req.body, keys);
-    const product = await Product.create(req.body);
-    res.json(product);
-  } catch (err) {
-    res.status(500).json(err);
+  const role = req.creds.role;
+
+  if (role === "admin") {
+    const keys = new Set(["name", "description", "sku", "categoryId", "price"])
+    try {
+      check_keys(req.body, keys);
+      const product = await Product.create(req.body);
+      res.json(product);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  }
+  else {
+    const err = { name: "NotAdminError", message: "For this feature, you must be admin" }
+    res.status(401).json(err);
   }
   return res;
 });
@@ -475,11 +535,11 @@ app.get('/shoppingcart', isAuth, async (req, res) => {
       include: ['products']
     });
     let new_shopping_cart_products = []
-    shopping_cart.products.map((product)=>{
+    shopping_cart.products.map((product) => {
       const product_to_add = product.toJSON();
       product_to_add.cantidad = product.ShoppingCartDetail.cantidad
       delete product_to_add.ShoppingCartDetail
-      new_shopping_cart_products.push(product_to_add)      
+      new_shopping_cart_products.push(product_to_add)
     })
     res.json(new_shopping_cart_products);
   } catch (err) {
@@ -503,7 +563,7 @@ app.delete('/shoppingcart/:productUuid', isAuth, async (req, res) => {
       where: { uuid: uuid },
     });
     const shopping_cart_detail = await ShoppingCartDetail.findOne({
-      where: { ProductId:product.id, ShoppingCartId:shopping_cart.id }
+      where: { ProductId: product.id, ShoppingCartId: shopping_cart.id }
     })
 
     await shopping_cart_detail.destroy();
@@ -556,7 +616,7 @@ module.exports.sum = sum;
 app.listen(PORT, HOST, async () => {
   console.log(`Running on http://${HOST}:${PORT}`);
   console.log(os.uptime());
-  await sequelize.sync({force: true});
+  // await sequelize.sync({force: true});
   await sequelize.authenticate();
   console.log("Database Connected");
 });

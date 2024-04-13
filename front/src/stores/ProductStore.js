@@ -39,6 +39,7 @@ export const useProductStore = defineStore('productStore', () => {
   async function $delete(product_) {
     const url = 'products' + '/' + product_.uuid;
     return axios.delete(url, product_).then(async (response) => {
+      product.value={}
       await $get_products();
       return response;
     }, (error) => { throw error });
