@@ -1,18 +1,15 @@
-import { ref, reactive } from 'vue'
-import { defineStore } from 'pinia'
-import axios from '@/axios';
-import { useInterceptors } from '@/axios';
-
-useInterceptors(axios);
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import {axiosInterceptors as axios} from '@/axios';
 
 const is_empty = (obj) => (Object.keys(obj).length === 0);
 
 export const user_adapter = {
-  "email": { type: 'text', icon: 'mdi-email' },
-  "password": { type: 'password', icon: 'mdi-key' },
-  "name": { type: 'text', icon: 'mdi-face-man' },
-  "role": { type: 'options', icon: '', items: ['admin', 'user'] },
-}
+  "email": { type: 'text', icon: 'mdi-email', label: 'email' },
+  "password": { type: 'password', icon: 'mdi-key', label: 'password' },
+  "name": { type: 'text', icon: 'mdi-face-man', label: 'name' },
+  "role": { type: 'options', icon: '', items: ['admin', 'user'], label: 'rol' },
+};
 
 export const useUserStore = defineStore('userStore', () => {
   const users = ref([]);
@@ -20,11 +17,11 @@ export const useUserStore = defineStore('userStore', () => {
 
   async function $get_users() {
     const response = await axios.get('users');
-    users.value = response.data
+    users.value = response.data;
     return response.data;
   }
   function $get_adapter() {
-    return user_adapter;
+    return JSON.parse(JSON.stringify(user_adapter));
   }
 
   function $set_user(user_) {

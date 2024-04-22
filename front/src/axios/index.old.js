@@ -8,19 +8,15 @@ const NOT_LOGGED = "Not logged"
 export default axios.create(config["axios"]);
 const refresh = async () => {
   const authStore = useAuthStore();
-  return authStore.$refreshToken()
-    .then((res) => { console.log(res); return res },
-      (err) => { return Promise.reject(err) })
-
-
+  await authStore.$refreshToken()
+  .then((response)=>{return response}).catch((error)=>{throw error});
 }
 const remove_interceptors = (axio, requestIn, responseIn) => {
   axio.interceptors.request.eject(requestIn);
   axio.interceptors.response.eject(responseIn);
 
 }
-export const useInterceptors = async (axiosToIntercept) => {
-  // console.log(await refresh().catch((err)=>{console.log(err)}))
+export const useInterceptors = (axiosToIntercept) => {
   const requestIntercept = axiosToIntercept.interceptors.request.use(
     async config => {
       const authStore = useAuthStore();
@@ -30,8 +26,9 @@ export const useInterceptors = async (axiosToIntercept) => {
       return config
     }, (error) => {
       if (config.sent === true) {
-        return Promise.reject("error", error);
       }
+      return Promise.reject("error", error);
+
 
     }
   )
@@ -43,19 +40,22 @@ export const useInterceptors = async (axiosToIntercept) => {
       const { access_token } = storeToRefs(authStore);
       const prevRequest = error?.config;
       // error?.response?.data?.name == "CookiesSetButNotAccessToken" &&
-      // && error?.response?.status === 401
-      if (error?.response?.status === 401&&(error?.response?.data?.name === "NoAccessTokenError"||error?.response?.data?.name === "ExpiredAccessToken")  && !prevRequest?.sent) {
-        console.log("aplie to retry", error)
-        const touken = await refresh()
-        const bearer_touken = "Bearer "+ touken;
-        access_token.value = bearer_touken
+      if ( error?.response?.status === 401 && !prevRequest?.sent) {
+        console.log("1")
+        console.log(prevRequest.sent)
+        prevRequest.sent = true;
+        await refresh().catch((error)=>{console.log(error)})
+        console.log("3")
         prevRequest.headers['Authorization'] = access_token.value;
+        console.log("4", prevRequest.headers['Authorization']);
         remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
+        console.log("5")
+
         return axiosToIntercept(prevRequest);
       }
       if ((error?.response?.data?.name == "InvalidRefreshToken")) {
         remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
-        authStore.$logout();
+        // authStore.$logout();
       }
       // if ((error?.response?.data?.name=="NoAccessTokenError"||error?.response?.data?.name=="InvalidRefreshToken")) {
       //   remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);

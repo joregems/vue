@@ -1,8 +1,9 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from '@/axios';
-import { useInterceptors } from '@/axios';
-useInterceptors(axios);
+// import axios from '@/axios';
+// import { useInterceptors } from '@/axios';
+// useInterceptors(axios);
+import {axiosInterceptors as axios} from '@/axios';
 
 export const useShoppingCartStore = defineStore('shoppingCartStore', () => {
   const products = ref([]);

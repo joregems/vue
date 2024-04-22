@@ -1,4 +1,5 @@
 'use strict';
+
 const { Model } = require('sequelize');
 const get_product_model = (DataTypes) => {
   return {
@@ -9,27 +10,44 @@ const get_product_model = (DataTypes) => {
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty:{ msg: 'Must be a name' }
+      }
     },
     description: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty:{ msg: 'Description must not be empty' }
+      }
     },
     sku: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+      unique: true,
+      validate: {
+        notEmpty:{ msg: 'Must not be empty' }
+      }
     },
     categoryId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    coverImage: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     price: {
       type: DataTypes.FLOAT,
       allowNull: false,
+      validate: {
+        notEmpty:{ msg: 'Must not be empty' },
+        isNumeric:{ msg: 'Price must be a number' }
+      }      
     }
   }
 }
-module.exports.get_product_model=get_product_model;
+module.exports.get_product_model = get_product_model;
 module.exports.model = (sequelize, DataTypes) => {
   const product_model = get_product_model(DataTypes);
   class Product extends Model {
@@ -38,12 +56,13 @@ module.exports.model = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ShoppingCart}) {
-      this.belongsToMany(ShoppingCart, { through: 'ShoppingCartDetail',as:'shoppingCarts'})
+    static associate({ ShoppingCart }) {
+      this.belongsToMany(ShoppingCart, { through: 'ShoppingCartDetail', as: 'shoppingCarts' })
 
     }
     toJSON() {
-      return { ...this.get(),
+      return {
+        ...this.get(),
         id: undefined,
         createdAt: undefined, updatedAt: undefined
       }

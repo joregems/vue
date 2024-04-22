@@ -12,6 +12,7 @@ const get_user_model = (DataTypes) => {
       allowNull: false,
       unique: true,
       validate: {
+        notEmpty:{ msg: 'Must be a name' },
         isEmail: { msg: 'Must be a valid email' }
       }
     },
@@ -47,11 +48,7 @@ const get_user_model = (DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        checkEmptyName(name) {
-          if (name === '') {
-            throw new Error('Name must not be empty');
-          }
-        }
+        notEmpty: { msg: 'Name must not be empty' }
       }
     },
     role: {
@@ -67,7 +64,7 @@ const get_user_model = (DataTypes) => {
         }
       }
     }
-  }; 
+  };
 }
 module.exports.get_user_fields = get_user_model;
 module.exports.model = (sequelize, DataTypes) => {
@@ -85,7 +82,7 @@ module.exports.model = (sequelize, DataTypes) => {
 
     }
     toJSON() {
-      return { ...this.get(), id: undefined, password: undefined, createdAt: undefined, updatedAt: undefined };
+      return { ...this.get(), id: undefined, password: '', createdAt: undefined, updatedAt: undefined };
     }
   }
   User.init(

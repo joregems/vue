@@ -1,29 +1,68 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from '@/axios';
-import { useInterceptors } from '@/axios';
+// import axios from '@/axios';
+import {axiosInterceptors as axios} from '@/axios';
 
-useInterceptors(axios);
-
-
-// export const product_adapter = {
-//   "email": { type: 'text', icon: 'mdi-email' },
-//   "password": { type: 'password', icon: 'mdi-key' },
-//   "name": { type: 'text', icon: 'mdi-face-man' },
-//   "role": { type: 'options', icon: '', items: ['admin', 'product'] },
-// }
+export const product_adapter = {
+  "name": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'nombre del producto' },
+  "description": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'descripción del producto' },
+  "sku": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'sku' },
+  "categoryId": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'blebleble' },
+  "price": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'precio del producto' },
+  "coverImage": { type: 'file', icon: '', label: 'seleccione una imagen' }
+};
 
 export const useProductStore = defineStore('productStore', () => {
   const products = ref([]);
   const product = ref({});
 
   async function $get_products() {
-    const response = await axios.get('products');
-    products.value = response.data
-    return response.data;
+    return await axios.get('products')
+      .then(
+        (response) => {
+          products.value = response.data;
+          return;
+        }, (error) => {
+          console.log(error);
+          throw error;
+        })
+    // return response.data;
   }
+  const check_image = (value) => {
+    value = Object.is(value, null) ? [''] : value;
+    value = typeof value === 'object' ? value[0] : value;
+    return value;
+  }
+  async function $create_product(obj){
+    const forme = new FormData();
+    forme.append('coverImage', check_image(obj.coverImage));
+    forme.append('name', obj.name);
+    forme.append('description', obj.description);
+    forme.append('sku', obj.sku);
+    forme.append('categoryId', obj.categoryId);
+    forme.append('price', obj.price);
+    return axios.post('products', forme)
+      .then((response) => {
+        return response;
+      })
+      .catch((error) => { throw error })
+  }
+  
+  async function $get_products() {
+    return await axios.get('products')
+      .then(
+        (response) => {
+          products.value = response.data;
+          return;
+        }, (error) => {
+          console.log(error);
+          throw error;
+        })
+    // return response.data;
+  }
+
   function $get_adapter() {
-    return product_adapter;
+    return JSON.parse(JSON.stringify(product_adapter));
   }
 
   function $set_product(product_) {
@@ -39,10 +78,10 @@ export const useProductStore = defineStore('productStore', () => {
   async function $delete(product_) {
     const url = 'products' + '/' + product_.uuid;
     return axios.delete(url, product_).then(async (response) => {
-      product.value={}
+      product.value = {};
       await $get_products();
       return response;
     }, (error) => { throw error });
   }
-  return { product, products, $get_adapter, $set_product, $get_products, $delete, $update }
+  return { product, products, $get_adapter, $set_product, $create_product, $get_products, $delete, $update }
 })

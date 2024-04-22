@@ -1,37 +1,32 @@
 <template>
-  <v-sheet width="300" class="mx-auto">
-    <v-form @submit.prevent="submit">
-      <v-text-field variant="solo" prepend-inner-icon="mdi-email" v-model="form.email"
-        label="Email"></v-text-field>
-      <v-text-field type="password" variant="solo" prepend-inner-icon="mdi-key" v-model="form.password"
-        label="Password">
-      </v-text-field>
-      <v-btn type="submit" block class="mt-2">Signin</v-btn>
-    </v-form>
-    <v-btn @click='()=>{router.push({name:"signup"})}' block class="mt-2">singUp</v-btn>
-
-  </v-sheet>
+  <GenericForm :obj="form" submitName="login" :adapter="user_adapter" :submit="authStore.$login" :callback="callback">
+    <template v-slot:down>
+      <v-btn @click='() => { router.push({ name: "signup" }) }' block class="mt-2">singUp</v-btn>
+    </template>
+  </GenericForm>
 </template>
 <script setup>
+import GenericForm from '@/components/GenericForm.vue';
+import { user_adapter } from '@/stores/UserStore'
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/AuthStore'
 import axios from '@/axios';
-import { useInterceptors } from '@/axios';
+// import { useInterceptors } from '@/axios';
+// useInterceptors(axios);
+
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia';
 const router = useRouter()
 const authStore = useAuthStore();
-
-useInterceptors(axios);
-const DEBUG = process.env.NODE_ENV === "development";
 const form = ref({
   email: '',
   password: '',
 })
 
-function submit() {
-  authStore.$login(form.value).catch((error)=>{console.log(error)})
-  router.push({name:"home"})
-  }
+function submit(obj) {
+  authStore.$login(obj).catch((error) => { console.log(error) })
+}
+const callback = () => {
+  router.push({ name: "home" })
+}
 
 </script>

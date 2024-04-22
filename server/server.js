@@ -1,4 +1,5 @@
 // 'use strict';
+const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 const express = require('express');
 const { sequelize, User, Post, Product, ShoppingCart, ShoppingCartDetail } = require('./models')
@@ -8,51 +9,97 @@ const env = process.env
 const os = require('os');
 const { comparePassword } = require('./utils/encript');
 const multer = require('multer')
-const path = require('path')
+const path = require('path');
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
-class MyError extends Error {
-  constructor(name,message) {
-    super();
-    this.name = name;
-    this.message = message;
+class CustomError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name
+  }
+  toJSON() {
+    return { name: this.name, message: this.message }
   }
 }
-
-// filename: (req,file,cb)=>{
-//   const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
-//   console.log(file)
-//   if (allowed_types.include(file.mimetype)) {
-//     cb(null, Date.now() + path.extname(file.originalname));
-
-//   }
-//   else{
-//     cb(new MyError('NotAllowedType','This file type is not allowed'));
-//   }
-
-
-// }
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images');
-  },
-  filename: (req, file, cb) => {
-    console.log(file)
-    // cb(new MyError('NotAllowedType','This file type is not allowed'));
-    const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
-    console.log(file)
-    if (allowed_types.includes(file.mimetype)) {
-      cb(null, Date.now() + path.extname(file.originalname));
-    }
-    else {
-      cb(new MyError('NotAllowedType','This file type is not allowed'));
-    }
+class CustomJsonWebTokenError extends jwt.JsonWebTokenError {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name
   }
+};
 
-})
+class NoAccessTokenError extends CustomJsonWebTokenError { };
+class AccessTokenInvalid extends CustomJsonWebTokenError { };
+class ExpiredAccessToken extends CustomJsonWebTokenError { };
+class RefreshTokenNotSet extends CustomJsonWebTokenError { };
 
-const upload = multer({ storage: storage });
+class InvalidAtributesError extends CustomError { };
+class NotAllowedType extends CustomError { };
+class NotAdminError extends CustomError { };
+class UserDoesNotExist extends CustomError { };
+class UserExpired extends CustomError { };
+class UserHasAnotherSession extends CustomError { };
+class InvalidUserOrPassword extends CustomError { };
+class CouldNotCheckCredentials extends CustomError { };
+class AdminRequired extends CustomError { };
+
+(function try_errors() {
+  error1 = new InvalidAtributesError("jeje");
+  error2 = new NotAdminError("jejaje");
+
+  console.log(JSON.parse(JSON.stringify(error2)), error2)
+
+})()
+
+// App
+const app = express();
+
+// Add headers before the routes are defined
+app.use(cors({
+  credentials: true,
+  origin: env.FRONT_HOST
+}));
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', env.FRONT_HOST)
+  next();
+});
+
+app.use(express.json());
+app.use(cookieParser());
+const public_root = 'public';
+app.use(express.static(public_root));
+
+
+const storage = (dest = "") => {
+  return multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(public_root, dest));
+    },
+    filename: (req, file, cb) => {
+      // cb(new MyError('NotAllowedType','This file type is not allowed'));
+      const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (allowed_types.includes(file.mimetype)) {
+        const name = Date.now() + "-" + uuidv4() + path.extname(file.originalname)
+        console.log(req.creds)
+        req.injected = {}
+        req.injected['filename'] = path.join(dest, name)
+        console.log(req.injected['filename'], name)
+        cb(null, name);
+
+      }
+      else {
+        cb(new NotAllowedType('This file type is not allowed'));
+      }
+
+    }
+  })
+}
+
+const custom_upload = (field_name, mode, dest) => {
+  const upload = multer({ storage: storage(dest) });
+  return upload[mode](field_name);
+};
 let users_autenticated = {}
 
 
@@ -60,15 +107,12 @@ const modify_users_autenticated = async (key, value) => {
   users_autenticated[key] = value;
 }
 
-// App
-const app = express();
-
-
-const check_keys = (obj, keys) => {
-  const obj_keys = Object.keys(obj);
+const check_fields_front = (form_from_front, valid_keys) => {
+  const obj_keys = Object.keys(form_from_front);
   obj_keys.map((key) => {
-    if (!keys.has(key)) {
-      throw { name: "InvalidAttributes", message: "there are invalid attribute: " + key };
+    if (!valid_keys.has(key)) {
+      console.log("throwing an error in check_fields_front")
+      throw new InvalidAtributesError("there are invalid attribute: " + key);
     }
   });
 }
@@ -81,78 +125,57 @@ const clear_cookies = (res) => {
   return res;
 }
 
-
-// const TryCatchWrapper = (target, propertyKey, descriptor) => {
-//   const fn = descriptor.value;
-//   descriptor.value = (...args) => {
-//     try {
-//       fn.apply(this, args);
-//     } catch (error) {
-//       throw (error);
-//     }
-//   };
-//   return descriptor;
-// };
-
-
-// const TryCatchWrapperAs = (target, propertyKey, descriptor) => {
-//   const fn = descriptor.value;
-//   descriptor.value = async (...args) => {
-//     try {
-//       await fn.apply(this, args);
-//     } catch (error) {
-//       throw (error);
-//     }
-//   };
-//   return descriptor;
-// };
-
-
-// const get_actual_user = async (req, res) => {
-//   try {
-//     const token = verify_token_from_req
-
-//   }
-//   catch (error) {
-//     throw (error)
-//   }
-
-//   isAuth(req, res)
-
-// }
-// const get_actual_user = async (req) => {
-//   try {
-//     const token = verify_token_from_req(req);
-//     const user_info = jwt.verify(token, env.TOKEN_SECRET);
-//     const user = await User.findOne({ where: { uuid:user_info.uuid } })
-//   }
-//   catch (error) {
-//     throw (error)
-//   }
-//   isAuth(req, res)
-
+// const get_refresh_token_from_req = (req) => {
+//   const token = req.cookies.access_token;
+//   if (!token)
+//     throw {
+//       "name": "NoRefreshTokenError",
+//       "message": "There is no refresh token"
+//     };
+//   return token;
 // }
 
+const verify_access_token_and_get_data = (req) => {
+  try {
+    const access_token = get_access_token_from_header(req)
+    return jwt.verify(access_token, env.TOKEN_SECRET);
+  }
+  catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ExpiredAccessToken("The access token is expired");
+    }
+    else{
+    throw error;
+    }
+    // if (error instanceof NoAccessTokenError) {
+    //   throw error;
+    // }    
+  }
 
-const get_access_token_from_req = (req) => {
-  const token = req.cookies.access_token;
-  if (!token)
-    throw {
-      "name": "NoAccessTokenError",
-      "message": "There is no access token"
-    };
-  return token;
 }
 
+const get_access_token_from_header = (req) => {
+  const c_e = new NoAccessTokenError("There is no access token")
+  if(Object.is(req.headers["authorization"],undefined)){
+    console.log("get_access_token_from_header", req.headers["authorization"])
+    throw c_e;
+  }
+  try {
+    if(!req.headers["authorization"].includes("earer")){
+      throw c_e;
+    }
+    const token = req.headers["authorization"].split(" ")[1];
+    if (!token) {
+      throw c_e;
+    }
+    return token;
+  }
+  catch (error) {
+    console.log(error)
+    throw c_e;
+  }
 
-// Add headers before the routes are defined
-app.use(cors({
-  credentials: true,
-  origin: env.FRONT_HOST
-}));
-
-app.use(express.json());
-app.use(cookieParser());
+}
 
 const cookies_opt = {
   secure: process.env.NODE_ENV !== "development",
@@ -186,12 +209,13 @@ const handleRefreshToken = async (req, res) => {
   try {
     const data = jwt.verify(refresh_token, env.TOKEN_SECRET);
     const new_access_token = await create_token({
-      data: { uuid: data.uuid, name: data.name },
+      data: { uuid: data.uuid, name: data.name, role: data.role },
     })
-    res.cookie('access_token', new_access_token, cookies_opt);
-    res.json();
+
+    res.json(new_access_token);
   }
   catch (err) {
+    console.log("handleRefreshToken", err)
     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
       res.status(401);
       err = {
@@ -200,67 +224,185 @@ const handleRefreshToken = async (req, res) => {
       }
       res = clear_cookies(res);
     }
-    else
-      res.status(403);
+    else {
+      res.status(403)
+      err = {
+        "name": "handleRefreshToken problem",
+        "message": "problem in handleRefreshToken"
+      }
+    }
     res.json(err);
   }
   return req, res;
 }
 
-
 //middleware for check if is auth
+
+// const check_session = (user, forced=false) => {
+//   console.log("check_session",user)
+//   if (forced && Object.is(user.token, undefined)) {
+//     error_custom = {
+//       "name": "CookieRefreshNotSet",
+//       "message": "The cookie refresh is not set"
+//     };
+//     throw error_custom;
+//   }
+//   if (forced && !Object.is(user.token, undefined)) {
+
+//     jwt.verify(user.token, env.TOKEN_SECRET);
+//     error_custom = {
+//       "name": "CookiesSetButNotAccessToken",
+//       "message": "The cookie refresh is set but there is not access token"
+//     };
+//     throw error_custom;
+//   }
+//   else if (forced) {
+//     return;
+//   }
+//   else if (!(users_autenticated[user.uuid] === token) && !Object.is(user.token, undefined)) { ///////////########pendiente de revision
+//     throw {
+//       "name": "UserHasAnotherSession",
+//       "message": "The user is logged in in another session"
+//     };
+//   }
+//   else {
+//     throw {
+//       "name": "ProblemPropblemus",
+//       "message": "glugluglu"
+//     };
+//   }
+// }
 async function isAuth(req, res, next) {
-  const inject_creds_to_req = (data, req, res, next) => {
-    req.creds = data;//inject creds to request
+  const inject_creds_to_req = (ana_data_nael, req, res, next) => {
+    req.creds = ana_data_nael;//inject creds to request
     return next();
   }
   try {
-    const token = get_access_token_from_req(req);
-    const data = jwt.verify(token, env.TOKEN_SECRET);
-    if (!(users_autenticated[data.uuid] === req.cookies.refresh_token)&&users_autenticated!={}) {
-      console.log(users_autenticated);
-      throw {
-        "name": "UserHasAnotherSession",
-        "message": "The user is logged in in another session"
-      }
-
-    }
-
+    const refresh_token = req.cookies.refresh_token
+    const ana_data_nael = verify_access_token_and_get_data(req);
     const user = await User.findOne({
-      where: { uuid: data.uuid }
-    })
-
+      where: { uuid: ana_data_nael.uuid }
+    });
     if (!user) {
-      throw {
-        "name": "UserExpired",
-        "message": "Invalid User"
-      }
+      throw new UserExpired("Invalid User")
     }
-    return inject_creds_to_req(data, req, res, next);
+    else if (Object.is(refresh_token, undefined)) { ///////////########pendiente de revision
+      throw new RefreshTokenNotSet("The refresh token is not set");
+    }
+    else if (!(users_autenticated[user.uuid] === refresh_token)) {
+      throw new UserHasAnotherSession("The user is logged in in another session");
+    }
+
+    return inject_creds_to_req(ana_data_nael, req, res, next);
   } catch (err) {
-    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
-      res.status(401);
-      err = {
-        "name": "InvalidAccessToken",
-        "message": "Invalid access token"
-      }
+    res.status(401)
+    if (err instanceof jwt.JsonWebTokenError && err instanceof jwt.TokenExpiredError || err instanceof NoAccessTokenError) {
+      console.log(err, "isAuth")
+      // err = new AccessTokenInvalid("Invalid access token")
     }
-    else
-      res.status(403)
     res.json(err)
     return res;
   }
 }
 
+//middleware for check if is auth
+// async function isAuth(req, res, next) {
+//   const inject_creds_to_req = (data, req, res, next) => {
+//     req.creds = data;//inject creds to request
+//     return next();
+//   }
+//   try {
+//     const token = get_access_token_from_req(req);
+//     const data = jwt.verify(token, env.TOKEN_SECRET);
+//     if (!(users_autenticated[data.uuid] === req.cookies.refresh_token)&&users_autenticated!={}) {
+//       console.log(users_autenticated);
+//       throw {
+//         "name": "UserHasAnotherSession",
+//         "message": "The user is logged in in another session"
+//       }
 
-//find user
+//     }
+
+//     const user = await User.findOne({
+//       where: { uuid: data.uuid }
+//     })
+
+//     if (!user) {
+//       throw {
+//         "name": "UserExpired",
+//         "message": "Invalid User"
+//       }
+//     }
+//     return inject_creds_to_req(data, req, res, next);
+//   } catch (err) {
+//     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+//       res.status(401);
+//       err = {
+//         "name": "InvalidAccessToken",
+//         "message": "Invalid access token"
+//       }
+//     }
+//     else
+//       res.status(403)
+//     res.json({...err})
+//     return res;
+//   }
+// }
+
+// middleware for check if is auth
+// async function isAuth(req, res, next) {
+//   const inject_creds_to_req = (data, req, res, next) => {
+//     req.creds = data;//inject creds to request
+//     return next();
+//   }
+//   try {
+//     const user_refresh_token = req.cookies.refresh_token;
+//     const user_access_token = get_access_token_from_header(req);
+//     const data = jwt.verify(user_access_token, env.TOKEN_SECRET);
+//     if (!(users_autenticated[data.uuid] === user_refresh_token) && !Object.is(users_autenticated[data.uuid], undefined)) {
+//       console.log(users_autenticated);
+//       throw {
+//         "name": "UserHasAnotherSession",
+//         "message": "The user is logged in in another session"
+//       }
+
+//     }
+
+//     const user = await User.findOne({
+//       where: { uuid: data.uuid }
+//     })
+
+//     if (!user) {
+//       throw {
+//         "name": "UserExpired",
+//         "message": "Invalid User"
+//       }
+//     }
+//     return inject_creds_to_req(data, req, res, next);
+//   } catch (err) {
+//     console.log(err, "errIsauth")
+//     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+//       res.status(401);
+//       err = {
+//         "name": "InvalidAccessToken",
+//         "message": "Invalid access token"
+//       }
+//     }
+//     else
+//       res.status(403)
+//     res.json({...err})
+//     return res;
+//   }
+// }
+
+//check connection
 app.get('/check_connection', async (req, res) => {
   // console.log("checking conection")
   res.sendStatus(200);
 });
 
 
-//check if is auth the user
+//check if the user is auth
 app.post('/check', isAuth, async (req, res) => {
   try {
     const user = await User.findOne({
@@ -269,22 +411,25 @@ app.post('/check', isAuth, async (req, res) => {
     res.json({ uuid: user.uuid, name: user.name, role: user.role })
   } catch (err) {
     console.log(err)
-    res.status(500).json({ error: 'Something whent wrong' })
+    res.status(500).json(new CouldNotCheckCredentials('the user is not logged'))
   }
   return res
 })
 
-//check if is auth the user
-app.post('/uploadtest', upload.single('image'), async (req, res) => {
+//uploadTest
+app.post('/uploadtest', isAuth, custom_upload("image", "single", "products"), async (req, res) => {
   try {
-    res.status(200).json("ches!!!")
+    console.log(req['creds'])
+
+    res.status(200).json(req['injected']['filename'])
     // throw {message:"blebleble", name:"nanana"};
   }
   catch (error) {
-    res.status(500).json({name:error.name, message:error.message})
+    res.status(500).json({ name: error.name, message: error.message })
   }
   return res;
 })
+
 
 //refresh auth token
 app.post('/refresh', async (req, res) => {
@@ -300,7 +445,7 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ where: { email } })
     const valid_password = await comparePassword(password, user.password);
     if (!valid_password)
-      throw { errors: "user or password don't match" };
+      throw new InvalidUserOrPassword("user or password don't match");
 
     const get_user_data_token = (user) => {
       return {
@@ -308,7 +453,6 @@ app.post('/login', async (req, res) => {
         uuid: user.uuid,
         role: user.role,
       }
-
     }
     const access_token = await create_token({
       data: get_user_data_token(user)
@@ -320,7 +464,7 @@ app.post('/login', async (req, res) => {
     })
     modify_users_autenticated(user.uuid, refresh_token);
     // console.log(users_autenticated, "usuarios autenticados");
-    res.cookie('access_token', access_token, cookies_opt);
+    // res.cookie('access_token', access_token, cookies_opt);
     res.cookie('refresh_token', refresh_token, cookies_opt);
     res.json(user);
   } catch (err) {
@@ -338,9 +482,20 @@ app.get('/logout', isAuth, async (req, res) => {
 });
 
 
+const admin_required = new AdminRequired("User must be an admin for use this function")
+
+
+///////!!!!!!!!!!!!!!!!!!!!!! throw error if not admin or the conditions are not fullilled
+const check_admin_and_conditions = (req, conditions) => {
+  if (!(req.creds.role === 'admin') && !conditions.every(x => x)) {
+    throw admin_required;
+  }
+}
 ///////////////////////crud user//////////////////////
+
+
 //create user
-app.post('/users', async (req, res) => {
+app.post('/users', async (req, res) => {/////#pendiente de implementar roles permisos
   const { name, password, email, role } = req.body;
   try {
     const user = await User.create({ name, password, email, role: "user" });
@@ -357,16 +512,23 @@ app.post('/users', async (req, res) => {
 // read user
 app.get('/users', isAuth, async (req, res) => {
   try {
-    const users = await User.findAll({
-      include: ['posts', {
-        model: ShoppingCart,
-        as: "shoppingCart",
-        include: ['products']
-      }],
-      //raw: true // <--- HERE
-    })
-    res.json(users)
-  } catch (err) {
+    if (req.creds.role === "admin") {
+      const users = await User.findAll({
+        // include: ['posts', {
+        //   model: ShoppingCart,
+        //   as: "shoppingCart",
+        //   include: ['products']
+        // }],
+        //raw: true // <--- HERE
+      })
+      res.json(users);
+    }
+    else {
+      const user = await User.findOne({ where: { uuid: req.creds.uuid } })
+      res.json([user])
+    }
+  }
+  catch (err) {
     console.log(err)
     res.status(500).json({ error: 'Something whent wrong' })
   }
@@ -376,14 +538,15 @@ app.get('/users', isAuth, async (req, res) => {
 
 //update user
 app.put('/users/:uuid', isAuth, async (req, res) => {
-  const uuid = req.params.uuid;
-  const user_to_replace = req.body;
   try {
+    const uuid = req.params.uuid;
+    const user_to_replace = req.body;
+    check_admin_and_conditions(req, [req.creds.uuid === uuid]);
     const user = await User.findOne({
       where: { uuid }
     })
     if (!user)
-      throw "something went wrong"
+      throw new UserDoesNotExist("The user doesn't exist");
     await user.update({ ...user_to_replace })
     res.json(user)
   } catch (err) {
@@ -394,42 +557,33 @@ app.put('/users/:uuid', isAuth, async (req, res) => {
 });
 
 
-//delete user
-app.delete('/users/:uuid', isAuth, async (req, res) => {
-  const uuid = req.params.uuid;
+const find_user_plus_callback = async (req, res, callback_user) => {
   try {
+    const uuid = req.params.uuid;
+    check_admin_and_conditions(req, [req.creds.uuid === uuid]);
     const user = await User.findOne({
       where: { uuid }
     })
     if (!user)
-      throw "something went wrong"
-
-    await user.destroy();
+      throw new UserDoesNotExist("The user doesn't exist");
+    callback_user(user);
     res.json(user)
   } catch (err) {
     console.log(err)
     res.status(500).json({ error: err })
   }
   return res
+}
+
+//delete user
+app.delete('/users/:uuid', isAuth, async (req, res) => {
+  return find_user_plus_callback(req, res, async (user) => { await user.destroy() });
 });
 
 
 //find user
-app.get('/users/:uuid', async (req, res) => {
-  const uuid = req.params.uuid
-  try {
-    const user = await User.findOne({
-      where: { uuid }
-    })
-    if (!user)
-      throw "something went wrong"
-
-    res.json(user)
-  } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: err })
-  }
-  return res
+app.get('/users/:uuid', isAuth, async (req, res) => {
+  return find_user_plus_callback(req, res, () => { });
 });
 
 
@@ -462,7 +616,7 @@ app.get('/posts', async (req, res) => {
     res.json(users)
     // res.json(posts)
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json(err.errors)
   }
   return res
@@ -470,21 +624,28 @@ app.get('/posts', async (req, res) => {
 
 
 //create product
-app.post('/products', isAuth, async (req, res) => {
-  const role = req.creds.role;
+app.post('/products', isAuth, custom_upload("coverImage", "single", "products"), async (req, res) => {
+  // const role = req.creds.role;
+  const role = "admin";
 
   if (role === "admin") {
-    const keys = new Set(["name", "description", "sku", "categoryId", "price"])
+    const keys = new Set(["name", "description", "sku", "categoryId", "price", "coverImage"])
     try {
-      check_keys(req.body, keys);
-      const product = await Product.create(req.body);
+      check_fields_front(req.body, keys);
+      console.log("1")
+      product_fields = !req?.injected?.filename ? req.body : { ...req.body, coverImage: req.injected.filename };
+      console.log("1.5")
+      const product = await Product.create(product_fields);
+      console.log("2")
+
       res.json(product);
+      console.log("3")
     } catch (err) {
       res.status(500).json(err);
     }
   }
   else {
-    const err = { name: "NotAdminError", message: "For this feature, you must be admin" }
+    const err = new NotAdminError("For this feature, you must be admin, your role is" + role)
     res.status(401).json(err);
   }
   return res;
@@ -494,33 +655,14 @@ app.post('/products', isAuth, async (req, res) => {
 // read products
 app.get('/products', isAuth, async (req, res) => {
   try {
-    const products = await Product.findAll()
-    res.json(products)
+    const products = await Product.findAll();
+    res.json(products);
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: 'Something whent wrong' })
+    console.log(err);
+    res.status(500).json({ error: 'Something whent wrong' });
   }
-  return res
+  return res;
 })
-
-
-// create shopping cart
-// app.post('/shoppingcarts', isAuth, async (req, res) => {
-//   const keys = new Set(["name", "description"])
-//   try {
-//     console.log(req.creds.uuid, "creds injected")
-//     const user = await User.findOne({
-//       where: { uuid: req.creds.uuid }
-//     });
-//     console.log("this is user", user);
-//     check_keys(req.body, keys);
-//     const shopping_cart = await ShoppingCart.create({ ...req.body, userId: user.id });
-//     res.json(shopping_cart);
-//   } catch (err) {
-//     res.status(500).json(err);
-//   }
-//   return res;
-// });
 
 
 // read products from shopping cart
@@ -567,12 +709,12 @@ app.delete('/shoppingcart/:productUuid', isAuth, async (req, res) => {
     })
 
     await shopping_cart_detail.destroy();
-    res.json()
+    res.json();
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json({ error: err })
   }
-  return res
+  return res;
 });
 
 
@@ -580,7 +722,7 @@ app.delete('/shoppingcart/:productUuid', isAuth, async (req, res) => {
 app.post('/shoppingcartsdetails', isAuth, async (req, res) => {
   const keys = new Set(["productUuid", "cantidad"]);
   try {
-    check_keys(req.body, keys);
+    check_fields_front(req.body, keys);
     const user = await User.findOne({
       where: { uuid: req.creds.uuid },
     });
@@ -606,11 +748,6 @@ function sum(a, b) {
   return a + b;
 }
 module.exports.sum = sum;
-
-// if (require.main === module) {
-//   main();
-// }
-
 
 //deploying server
 app.listen(PORT, HOST, async () => {

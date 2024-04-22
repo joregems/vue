@@ -3,7 +3,7 @@
     <v-form enctype="multipart/form-data" @submit.prevent="() => {
       submit();
     }">
-      <v-file-input type="file" v-model="file" truncate-length="15"></v-file-input>
+      <v-file-input :label="key" type="file" v-model="file" truncate-length="15"></v-file-input>
       <v-btn type="submit" block class="mt-2">submit</v-btn>
 
     </v-form>

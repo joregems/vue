@@ -4,13 +4,15 @@ const {v4:uuidv4} = require('uuid');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.bulkInsert('Product', [{
+    await queryInterface.bulkInsert('Product', 
+    [{
       uuid: uuidv4(),
       name: 'papitas con mazamorra',
       description: "de pollo",
       sku: "1",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -21,6 +23,7 @@ module.exports = {
       sku: "2",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -31,6 +34,7 @@ module.exports = {
       sku: "3",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -41,6 +45,7 @@ module.exports = {
       sku: "4",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -51,6 +56,7 @@ module.exports = {
       sku: "5",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -61,6 +67,7 @@ module.exports = {
       sku: "6",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     },
@@ -71,6 +78,7 @@ module.exports = {
       sku: "7",
       categoryId: "blebleble",
       price: 800,
+      coverImage: "https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
       createdAt: new Date(),
       updatedAt: new Date()
     }
