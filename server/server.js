@@ -28,11 +28,19 @@ class CustomJsonWebTokenError extends jwt.JsonWebTokenError {
     this.name = this.constructor.name
   }
 };
-
-class NoAccessTokenError extends CustomJsonWebTokenError { };
-class AccessTokenInvalid extends CustomJsonWebTokenError { };
-class ExpiredAccessToken extends CustomJsonWebTokenError { };
+class CustomTokenExpiredError extends jwt.TokenExpiredError {
+  constructor(message) {
+    super(message);
+    this.name = this.constructor.name
+  }
+};
+class InvalidAccessToken extends CustomJsonWebTokenError { };
+class InvalidRefreshToken extends CustomJsonWebTokenError { };
+class AccessTokenNoSet extends CustomJsonWebTokenError { };
 class RefreshTokenNotSet extends CustomJsonWebTokenError { };
+
+class ExpiredAccessToken extends CustomTokenExpiredError { };
+class ExpiredRefreshToken extends CustomTokenExpiredError { };
 
 class InvalidAtributesError extends CustomError { };
 class NotAllowedType extends CustomError { };
@@ -136,32 +144,33 @@ const clear_cookies = (res) => {
 // }
 
 const verify_access_token_and_get_data = (req) => {
-  try {
     const access_token = get_access_token_from_header(req)
+   try {
     return jwt.verify(access_token, env.TOKEN_SECRET);
   }
   catch (error) {
+    console.log(error,"verify_access_token_and_get_data")
     if (error instanceof jwt.TokenExpiredError) {
       throw new ExpiredAccessToken("The access token is expired");
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new InvalidAccessToken("The access token is invalid");
     }
     else{
     throw error;
     }
-    // if (error instanceof NoAccessTokenError) {
-    //   throw error;
-    // }    
   }
 
 }
 
 const get_access_token_from_header = (req) => {
-  const c_e = new NoAccessTokenError("There is no access token")
+  const c_e = new AccessTokenNoSet("There is no access token")
   if(Object.is(req.headers["authorization"],undefined)){
     console.log("get_access_token_from_header", req.headers["authorization"])
     throw c_e;
   }
   try {
-    if(!req.headers["authorization"].includes("earer")){
+    if(!String(req.headers["authorization"]).toLocaleLowerCase().includes("bearer")){
       throw c_e;
     }
     const token = req.headers["authorization"].split(" ")[1];
@@ -172,7 +181,7 @@ const get_access_token_from_header = (req) => {
   }
   catch (error) {
     console.log(error)
-    throw c_e;
+    throw error;
   }
 
 }
@@ -211,18 +220,17 @@ const handleRefreshToken = async (req, res) => {
     const new_access_token = await create_token({
       data: { uuid: data.uuid, name: data.name, role: data.role },
     })
-
     res.json(new_access_token);
   }
   catch (err) {
+    res = clear_cookies(res);
     console.log("handleRefreshToken", err)
-    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
-      res.status(401);
-      err = {
-        "name": "InvalidRefreshToken",
-        "message": "invalid refresh token"
-      }
-      res = clear_cookies(res);
+    res.status(401);
+    if(err instanceof jwt.TokenExpiredError){
+      err = new ExpiredRefreshToken("Expired refresh token");
+    }
+    else if (err instanceof jwt.JsonWebTokenError) {
+      err = new InvalidRefreshToken("Invalid refresh token");
     }
     else {
       res.status(403)
@@ -296,104 +304,15 @@ async function isAuth(req, res, next) {
     return inject_creds_to_req(ana_data_nael, req, res, next);
   } catch (err) {
     res.status(401)
-    if (err instanceof jwt.JsonWebTokenError && err instanceof jwt.TokenExpiredError || err instanceof NoAccessTokenError) {
-      console.log(err, "isAuth")
-      // err = new AccessTokenInvalid("Invalid access token")
-    }
+    // if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError || err instanceof AccessTokenNoSet) {
+    //   console.log(err, "isAuth")
+    //   // err = new AccessTokenInvalid("Invalid access token")
+    // }
     res.json(err)
     return res;
   }
 }
 
-//middleware for check if is auth
-// async function isAuth(req, res, next) {
-//   const inject_creds_to_req = (data, req, res, next) => {
-//     req.creds = data;//inject creds to request
-//     return next();
-//   }
-//   try {
-//     const token = get_access_token_from_req(req);
-//     const data = jwt.verify(token, env.TOKEN_SECRET);
-//     if (!(users_autenticated[data.uuid] === req.cookies.refresh_token)&&users_autenticated!={}) {
-//       console.log(users_autenticated);
-//       throw {
-//         "name": "UserHasAnotherSession",
-//         "message": "The user is logged in in another session"
-//       }
-
-//     }
-
-//     const user = await User.findOne({
-//       where: { uuid: data.uuid }
-//     })
-
-//     if (!user) {
-//       throw {
-//         "name": "UserExpired",
-//         "message": "Invalid User"
-//       }
-//     }
-//     return inject_creds_to_req(data, req, res, next);
-//   } catch (err) {
-//     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
-//       res.status(401);
-//       err = {
-//         "name": "InvalidAccessToken",
-//         "message": "Invalid access token"
-//       }
-//     }
-//     else
-//       res.status(403)
-//     res.json({...err})
-//     return res;
-//   }
-// }
-
-// middleware for check if is auth
-// async function isAuth(req, res, next) {
-//   const inject_creds_to_req = (data, req, res, next) => {
-//     req.creds = data;//inject creds to request
-//     return next();
-//   }
-//   try {
-//     const user_refresh_token = req.cookies.refresh_token;
-//     const user_access_token = get_access_token_from_header(req);
-//     const data = jwt.verify(user_access_token, env.TOKEN_SECRET);
-//     if (!(users_autenticated[data.uuid] === user_refresh_token) && !Object.is(users_autenticated[data.uuid], undefined)) {
-//       console.log(users_autenticated);
-//       throw {
-//         "name": "UserHasAnotherSession",
-//         "message": "The user is logged in in another session"
-//       }
-
-//     }
-
-//     const user = await User.findOne({
-//       where: { uuid: data.uuid }
-//     })
-
-//     if (!user) {
-//       throw {
-//         "name": "UserExpired",
-//         "message": "Invalid User"
-//       }
-//     }
-//     return inject_creds_to_req(data, req, res, next);
-//   } catch (err) {
-//     console.log(err, "errIsauth")
-//     if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
-//       res.status(401);
-//       err = {
-//         "name": "InvalidAccessToken",
-//         "message": "Invalid access token"
-//       }
-//     }
-//     else
-//       res.status(403)
-//     res.json({...err})
-//     return res;
-//   }
-// }
 
 //check connection
 app.get('/check_connection', async (req, res) => {
@@ -753,7 +672,7 @@ module.exports.sum = sum;
 app.listen(PORT, HOST, async () => {
   console.log(`Running on http://${HOST}:${PORT}`);
   console.log(os.uptime());
-  // await sequelize.sync({force: true});
+  await sequelize.sync({force: true});
   await sequelize.authenticate();
   console.log("Database Connected");
 });

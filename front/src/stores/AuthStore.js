@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('authStore', () => {
   const $set_access_token = async (token) => {
     access_token.value = token;
   }
-  const $get_access_token = () => {
+  const $get_access_token = async () => {
     return access_token.value;
   }
   const $reset = () => {
@@ -95,7 +95,7 @@ export const useAuthStore = defineStore('authStore', () => {
 
   async function $refreshToken() {
     console.log("refresh")
-    return axios.post('/refresh')
+    return axiosInterceptors.post('/refresh')
       .then((res) => {
         return res.data;
         // const bearer_header = 'Bearer ' + res.data;

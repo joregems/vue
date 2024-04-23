@@ -1,14 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import SignIn from '@/components/SignIn.vue'
-import SignUp from '@/components/SignUp.vue'
-import LogOut from '@/components/LogOut.vue'
-import UserListView from '@/views/UserListView.vue'
-import ProductListView from '@/views/ProductListView.vue'
-import ProductForm from '@/components/shopping/Product/ProductForm.vue'
-import ShoppingCartView from '@/views/ShoppingCartView.vue'
+
+const SignIn = () => import('@/components/SignIn.vue');
+const SignUp = () => import('@/components/SignUp.vue');
+const LogOut = () => import('@/components/LogOut.vue');
+const UserListView = () => import('@/views/UserListView.vue');
+const ProductListView = () => import('@/views/ProductListView.vue');
+const ProductForm = () => import('@/components/shopping/Product/ProductForm.vue');
+const ShoppingCartView = () => import('@/views/ShoppingCartView.vue');
+const ImageUpload = () => import("@/components/ImageUpload.vue");
+
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import ImageUpload from "@/components/ImageUpload.vue"
 import { useAuthStore } from '@/stores/AuthStore'
 
 const enterSignin = async (to, from, next) => {

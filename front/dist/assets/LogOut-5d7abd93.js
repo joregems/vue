@@ -1,0 +1,1 @@
+import{_ as o,a as e,u}from"./index-30906700.js";const s={__name:"LogOut",setup(r){const t=e();return u(),t.$logout(),(_,a)=>null}},n=o(s,[["__file","/app/src/components/LogOut.vue"]]);export{n as default};

@@ -8,11 +8,13 @@ const NOT_LOGGED = "Not logged"
 export default axios.create(config["axios"]);
 const refresh = async () => {
   const authStore = useAuthStore();
+  const {access_token} = storeToRefs(authStore)
   return authStore.$refreshToken()
-    .then((res) => { console.log(res); return res },
+    .then(async (res) => {
+      const bearer_touken = "Bearer " + res;
+      await authStore.$set_access_token(bearer_touken);
+      return},
       (err) => { return Promise.reject(err) })
-
-
 }
 const remove_interceptors = (axio, requestIn, responseIn) => {
   axio.interceptors.request.eject(requestIn);
@@ -20,13 +22,15 @@ const remove_interceptors = (axio, requestIn, responseIn) => {
 
 }
 export const useInterceptors = async (axiosToIntercept) => {
-  // console.log(await refresh().catch((err)=>{console.log(err)}))
+  console.log("unterceptors")
   const requestIntercept = axiosToIntercept.interceptors.request.use(
     async config => {
+      console.log("intercepter")
       const authStore = useAuthStore();
       const { access_token } = storeToRefs(authStore);
-      if (!Object.is(access_token.value, undefined))
-        config.headers['Authorization'] = access_token.value;
+      // if (!Object.is(access_token.value, undefined))
+      console.log(access_token.value)
+      config.headers['Authorization'] = access_token.value;
       return config
     }, (error) => {
       if (config.sent === true) {
@@ -39,29 +43,28 @@ export const useInterceptors = async (axiosToIntercept) => {
   const responseIntercept = axiosToIntercept.interceptors.response.use(
     response => response,
     async (error) => {
+      console.log("responder")
+
       const authStore = useAuthStore();
-      const { access_token } = storeToRefs(authStore);
+      // const { access_token } = storeToRefs(authStore);
       const prevRequest = error?.config;
       // error?.response?.data?.name == "CookiesSetButNotAccessToken" &&
       // && error?.response?.status === 401
-      if (error?.response?.status === 401&&(error?.response?.data?.name === "NoAccessTokenError"||error?.response?.data?.name === "ExpiredAccessToken")  && !prevRequest?.sent) {
+      if (error?.response?.status === 401 &&
+        (error?.response?.data?.name === "AccessTokenNoSet" || error?.response?.data?.name === "ExpiredAccessToken") && !prevRequest?.sent) {
         console.log("aplie to retry", error)
-        const touken = await refresh()
-        const bearer_touken = "Bearer "+ touken;
-        access_token.value = bearer_touken
-        prevRequest.headers['Authorization'] = access_token.value;
-        remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
+        await refresh()
+        prevRequest.headers['Authorization'] = await authStore.$get_access_token();
+        // remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
         return axiosToIntercept(prevRequest);
       }
-      if ((error?.response?.data?.name == "InvalidRefreshToken")) {
+      if (prevRequest?.sent && (error?.response?.data?.name === "ExpiredRefreshToken")) {
         remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
         authStore.$logout();
       }
-      // if ((error?.response?.data?.name=="NoAccessTokenError"||error?.response?.data?.name=="InvalidRefreshToken")) {
-      //   remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
-      //   const authStore = useAuthStore();
-      //   authStore.$logout()
-      // }
+      else
+        // remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
+
       return Promise.reject(error);
     }
   )
