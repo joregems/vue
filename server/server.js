@@ -133,15 +133,6 @@ const clear_cookies = (res) => {
   return res;
 }
 
-// const get_refresh_token_from_req = (req) => {
-//   const token = req.cookies.access_token;
-//   if (!token)
-//     throw {
-//       "name": "NoRefreshTokenError",
-//       "message": "There is no refresh token"
-//     };
-//   return token;
-// }
 
 const verify_access_token_and_get_data = (req) => {
     const access_token = get_access_token_from_header(req)
@@ -244,42 +235,6 @@ const handleRefreshToken = async (req, res) => {
   return req, res;
 }
 
-//middleware for check if is auth
-
-// const check_session = (user, forced=false) => {
-//   console.log("check_session",user)
-//   if (forced && Object.is(user.token, undefined)) {
-//     error_custom = {
-//       "name": "CookieRefreshNotSet",
-//       "message": "The cookie refresh is not set"
-//     };
-//     throw error_custom;
-//   }
-//   if (forced && !Object.is(user.token, undefined)) {
-
-//     jwt.verify(user.token, env.TOKEN_SECRET);
-//     error_custom = {
-//       "name": "CookiesSetButNotAccessToken",
-//       "message": "The cookie refresh is set but there is not access token"
-//     };
-//     throw error_custom;
-//   }
-//   else if (forced) {
-//     return;
-//   }
-//   else if (!(users_autenticated[user.uuid] === token) && !Object.is(user.token, undefined)) { ///////////########pendiente de revision
-//     throw {
-//       "name": "UserHasAnotherSession",
-//       "message": "The user is logged in in another session"
-//     };
-//   }
-//   else {
-//     throw {
-//       "name": "ProblemPropblemus",
-//       "message": "glugluglu"
-//     };
-//   }
-// }
 async function isAuth(req, res, next) {
   const inject_creds_to_req = (ana_data_nael, req, res, next) => {
     req.creds = ana_data_nael;//inject creds to request
@@ -304,10 +259,7 @@ async function isAuth(req, res, next) {
     return inject_creds_to_req(ana_data_nael, req, res, next);
   } catch (err) {
     res.status(401)
-    // if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError || err instanceof AccessTokenNoSet) {
-    //   console.log(err, "isAuth")
-    //   // err = new AccessTokenInvalid("Invalid access token")
-    // }
+
     res.json(err)
     return res;
   }
@@ -382,8 +334,7 @@ app.post('/login', async (req, res) => {
       expire: parseInt(env.DEFAULT_EXPIRE_REFRESH_TOKEN)
     })
     modify_users_autenticated(user.uuid, refresh_token);
-    // console.log(users_autenticated, "usuarios autenticados");
-    // res.cookie('access_token', access_token, cookies_opt);
+
     res.cookie('refresh_token', refresh_token, cookies_opt);
     res.json(user);
   } catch (err) {
@@ -402,10 +353,8 @@ app.get('/logout', isAuth, async (req, res) => {
 
 
 const admin_required = new AdminRequired("User must be an admin for use this function")
-
-
-///////!!!!!!!!!!!!!!!!!!!!!! throw error if not admin or the conditions are not fullilled
-const check_admin_and_conditions = (req, conditions) => {
+///////!!!!!!!!!!!!!!!!!!!!!! throw error if not admin or all conditions are not fullilled
+const check_admin_and_conditions = (req, conditions) => {//#######revisar
   if (!(req.creds.role === 'admin') && !conditions.every(x => x)) {
     throw admin_required;
   }
@@ -672,7 +621,7 @@ module.exports.sum = sum;
 app.listen(PORT, HOST, async () => {
   console.log(`Running on http://${HOST}:${PORT}`);
   console.log(os.uptime());
-  await sequelize.sync({force: true});
+  // await sequelize.sync({force: true});
   await sequelize.authenticate();
   console.log("Database Connected");
 });

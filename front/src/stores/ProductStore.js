@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-// import axios from '@/axios';
-import {axiosInterceptors as axios} from '@/axios';
+import { axiosInterceptors as axios } from '@/axios';
 
 export const product_adapter = {
   "name": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'nombre del producto' },
@@ -13,27 +12,15 @@ export const product_adapter = {
 };
 
 export const useProductStore = defineStore('productStore', () => {
-  const products = ref([]);
+  const products = ref({});
   const product = ref({});
 
-  async function $get_products() {
-    return await axios.get('products')
-      .then(
-        (response) => {
-          products.value = response.data;
-          return;
-        }, (error) => {
-          console.log(error);
-          throw error;
-        })
-    // return response.data;
-  }
   const check_image = (value) => {
     value = Object.is(value, null) ? [''] : value;
     value = typeof value === 'object' ? value[0] : value;
     return value;
   }
-  async function $create_product(obj){
+  async function $create_product(obj) {
     const forme = new FormData();
     forme.append('coverImage', check_image(obj.coverImage));
     forme.append('name', obj.name);
@@ -47,20 +34,32 @@ export const useProductStore = defineStore('productStore', () => {
       })
       .catch((error) => { throw error })
   }
-  
-  async function $get_products() {
+
+  async function $get_products_from_api() {
     return await axios.get('products')
       .then(
         (response) => {
-          products.value = response.data;
+          const dictionary_products = Object.assign({}, ...response.data.map((x) => ({ [x.uuid]: x })));
+          products.value = dictionary_products;
           return;
         }, (error) => {
           console.log(error);
           throw error;
         })
-    // return response.data;
   }
 
+  async function $get_products_from_api() {
+    return await axios.get('products')
+      .then(
+        (response) => {
+          const dictionary_products = Object.assign({}, ...response.data.map((x) => ({ [x.uuid]: x })));
+          products.value = dictionary_products;
+          return;
+        }, (error) => {
+          console.log(error);
+          throw error;
+        })
+  }
   function $get_adapter() {
     return JSON.parse(JSON.stringify(product_adapter));
   }
@@ -71,7 +70,7 @@ export const useProductStore = defineStore('productStore', () => {
   async function $update(product_) {
     const url = 'products' + '/' + product_.uuid;
     return axios.put(url, product_).then(async (response) => {
-      await $get_products();
+      await $get_products_from_api();
       return response;
     }, (error) => { throw error });
   }
@@ -79,9 +78,9 @@ export const useProductStore = defineStore('productStore', () => {
     const url = 'products' + '/' + product_.uuid;
     return axios.delete(url, product_).then(async (response) => {
       product.value = {};
-      await $get_products();
+      await $get_products_from_api();
       return response;
     }, (error) => { throw error });
   }
-  return { product, products, $get_adapter, $set_product, $create_product, $get_products, $delete, $update }
+  return { product, products, $get_adapter, $set_product, $create_product, $get_products_from_api, $delete, $update }
 })
