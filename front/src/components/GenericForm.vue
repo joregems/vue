@@ -59,21 +59,20 @@ onBeforeMount(() => {
 
 async function submit(obj, emit_ps) {
   const err_to_arr = (arr) => {
-    const respons_arr = {};
+    const response_array = {};
     arr.forEach(element => {
       try {
-        respons_arr[element.path].push(element.message)
+        response_array[element.path].push(element.message)
       }
       catch {
-        respons_arr[element.path] = [element.message]
+        response_array[element.path] = [element.message]
       }
-      // respons_arr[element.path]=[...respons_arr[element.path],element.message]??[];
     });
-    return respons_arr;
+    return response_array;
   }
   props.submit(obj).then(
     (response) => {
-      errors.value = ["updated sucessfully"]
+      errors.value = ["updated successfully"]
       try {
         emit_ps();
         props.callback();

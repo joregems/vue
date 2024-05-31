@@ -1,17 +1,17 @@
 <script setup>
 import '@mdi/font/css/materialdesignicons.css'
-import { ref } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore'
 const authStore = useAuthStore();
 const { is_logged, loading, user } = storeToRefs(authStore)
-const sidebar = ref(false);
 import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   active_sidebar: Boolean,
   width:String
 });
+
 const appTitle = 'magic';
+const logo = 'https://wilsonclinic.com/wp-content/uploads/2018/12/placeholder-logo-2.png'
 const menuLoggedOut = [
   { title: 'Sign In', path: '/signin', icon: 'mdi-lock-open' },
   { title: 'Sign Up', path: '/signup', icon: 'mdi-exit-to-app' }];
@@ -30,11 +30,11 @@ const menuAdmin = [
 
 </script>
 <template>
-  <v-app-bar class="position-sticky">
+  <v-app-bar prominent>
     <v-app-bar-nav-icon :height="props.width" @click.stop="$emit('toggle')"></v-app-bar-nav-icon>
     <v-toolbar-title class="d-none d-sm-inline-flex">appTitle</v-toolbar-title>
     <v-avatar :tile="true">
-      <v-img alt="Avatar" src="https://avatars0.githubusercontent.com/u/9064066?v=4&s=460">
+      <v-img alt="Avatar" :src="logo">
       </v-img>
     </v-avatar>
     <v-spacer></v-spacer>

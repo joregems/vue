@@ -48,18 +48,6 @@ export const useProductStore = defineStore('productStore', () => {
         })
   }
 
-  async function $get_products_from_api() {
-    return await axios.get('products')
-      .then(
-        (response) => {
-          const dictionary_products = Object.assign({}, ...response.data.map((x) => ({ [x.uuid]: x })));
-          products.value = dictionary_products;
-          return;
-        }, (error) => {
-          console.log(error);
-          throw error;
-        })
-  }
   function $get_adapter() {
     return JSON.parse(JSON.stringify(product_adapter));
   }

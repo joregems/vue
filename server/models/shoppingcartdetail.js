@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 
 const get_shopping_cart_detail_model = (DataTypes) => {
   return {
-    cantidad: {
+    quantity: {
       type: DataTypes.FLOAT,
       allowNull: false,
     },

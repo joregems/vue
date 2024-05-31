@@ -129,3 +129,10 @@ out
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Server folder
+front/src/components/examples
+front/src/components/Test
+# Front folder, it has an aditional .gitignore
+server/public
+

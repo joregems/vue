@@ -52,13 +52,6 @@ class InvalidUserOrPassword extends CustomError { };
 class CouldNotCheckCredentials extends CustomError { };
 class AdminRequired extends CustomError { };
 
-(function try_errors() {
-  error1 = new InvalidAtributesError("jeje");
-  error2 = new NotAdminError("jejaje");
-
-  console.log(JSON.parse(JSON.stringify(error2)), error2)
-
-})()
 
 // App
 const app = express();
@@ -68,6 +61,7 @@ app.use(cors({
   credentials: true,
   origin: env.FRONT_HOST
 }));
+
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', env.FRONT_HOST)
   next();
@@ -85,16 +79,12 @@ const storage = (dest = "") => {
       cb(null, path.join(public_root, dest));
     },
     filename: (req, file, cb) => {
-      // cb(new MyError('NotAllowedType','This file type is not allowed'));
       const allowed_types = ['image/png', 'image/jpeg', 'application/pdf'];
       if (allowed_types.includes(file.mimetype)) {
         const name = Date.now() + "-" + uuidv4() + path.extname(file.originalname)
-        console.log(req.creds)
         req.injected = {}
         req.injected['filename'] = path.join(dest, name)
-        console.log(req.injected['filename'], name)
         cb(null, name);
-
       }
       else {
         cb(new NotAllowedType('This file type is not allowed'));
@@ -115,11 +105,12 @@ const modify_users_autenticated = async (key, value) => {
   users_autenticated[key] = value;
 }
 
-const check_fields_front = (form_from_front, valid_keys) => {
-  const obj_keys = Object.keys(form_from_front);
+//compares the fields that should be present in the front form, against
+//the valid keys
+const check_fields_front = (fields_from_form, valid_keys) => {
+  const obj_keys = Object.keys(fields_from_form);
   obj_keys.map((key) => {
     if (!valid_keys.has(key)) {
-      console.log("throwing an error in check_fields_front")
       throw new InvalidAtributesError("there are invalid attribute: " + key);
     }
   });
@@ -135,20 +126,20 @@ const clear_cookies = (res) => {
 
 
 const verify_access_token_and_get_data = (req) => {
-    const access_token = get_access_token_from_header(req)
-   try {
+  const access_token = get_access_token_from_header(req)
+  try {
     return jwt.verify(access_token, env.TOKEN_SECRET);
   }
   catch (error) {
-    console.log(error,"verify_access_token_and_get_data")
+    console.log(error, "verify_access_token_and_get_data")
     if (error instanceof jwt.TokenExpiredError) {
       throw new ExpiredAccessToken("The access token is expired");
     }
     if (error instanceof jwt.JsonWebTokenError) {
       throw new InvalidAccessToken("The access token is invalid");
     }
-    else{
-    throw error;
+    else {
+      throw error;
     }
   }
 
@@ -156,12 +147,12 @@ const verify_access_token_and_get_data = (req) => {
 
 const get_access_token_from_header = (req) => {
   const c_e = new AccessTokenNoSet("There is no access token")
-  if(Object.is(req.headers["authorization"],undefined)){
+  if (Object.is(req.headers["authorization"], undefined)) {
     console.log("get_access_token_from_header", req.headers["authorization"])
     throw c_e;
   }
   try {
-    if(!String(req.headers["authorization"]).toLocaleLowerCase().includes("bearer")){
+    if (!String(req.headers["authorization"]).toLocaleLowerCase().includes("bearer")) {
       throw c_e;
     }
     const token = req.headers["authorization"].split(" ")[1];
@@ -217,7 +208,7 @@ const handleRefreshToken = async (req, res) => {
     res = clear_cookies(res);
     console.log("handleRefreshToken", err)
     res.status(401);
-    if(err instanceof jwt.TokenExpiredError){
+    if (err instanceof jwt.TokenExpiredError) {
       err = new ExpiredRefreshToken("Expired refresh token");
     }
     else if (err instanceof jwt.JsonWebTokenError) {
@@ -235,16 +226,17 @@ const handleRefreshToken = async (req, res) => {
   return req, res;
 }
 
+//if the user is auth, injects the credentials to req.creds
 async function isAuth(req, res, next) {
-  const inject_creds_to_req = (ana_data_nael, req, res, next) => {
-    req.creds = ana_data_nael;//inject creds to request
+  const inject_creds_to_req = (data, req, res, next) => {
+    req.creds = data;//inject creds to request
     return next();
   }
   try {
     const refresh_token = req.cookies.refresh_token
-    const ana_data_nael = verify_access_token_and_get_data(req);
+    const data = verify_access_token_and_get_data(req);
     const user = await User.findOne({
-      where: { uuid: ana_data_nael.uuid }
+      where: { uuid: data.uuid }
     });
     if (!user) {
       throw new UserExpired("Invalid User")
@@ -256,7 +248,7 @@ async function isAuth(req, res, next) {
       throw new UserHasAnotherSession("The user is logged in in another session");
     }
 
-    return inject_creds_to_req(ana_data_nael, req, res, next);
+    return inject_creds_to_req(data, req, res, next);
   } catch (err) {
     res.status(401)
 
@@ -268,7 +260,6 @@ async function isAuth(req, res, next) {
 
 //check connection
 app.get('/check_connection', async (req, res) => {
-  // console.log("checking conection")
   res.sendStatus(200);
 });
 
@@ -290,10 +281,7 @@ app.post('/check', isAuth, async (req, res) => {
 //uploadTest
 app.post('/uploadtest', isAuth, custom_upload("image", "single", "products"), async (req, res) => {
   try {
-    console.log(req['creds'])
-
     res.status(200).json(req['injected']['filename'])
-    // throw {message:"blebleble", name:"nanana"};
   }
   catch (error) {
     res.status(500).json({ name: error.name, message: error.message })
@@ -500,14 +488,9 @@ app.post('/products', isAuth, custom_upload("coverImage", "single", "products"),
     const keys = new Set(["name", "description", "sku", "categoryId", "price", "coverImage"])
     try {
       check_fields_front(req.body, keys);
-      console.log("1")
       product_fields = !req?.injected?.filename ? req.body : { ...req.body, coverImage: req.injected.filename };
-      console.log("1.5")
       const product = await Product.create(product_fields);
-      console.log("2")
-
       res.json(product);
-      console.log("3")
     } catch (err) {
       res.status(500).json(err);
     }
@@ -542,12 +525,13 @@ app.get('/shoppingcart', isAuth, async (req, res) => {
 
     const shopping_cart = await ShoppingCart.findOne({
       where: { userId: user.id },
-      include: ['products']
+      include: ['products'],
+      order: [['products', 'id', 'DESC']]
     });
     let new_shopping_cart_products = []
     shopping_cart.products.map((product) => {
       const product_to_add = product.toJSON();
-      product_to_add.cantidad = product.ShoppingCartDetail.cantidad
+      product_to_add.quantity = product.ShoppingCartDetail.quantity
       delete product_to_add.ShoppingCartDetail
       new_shopping_cart_products.push(product_to_add)
     })
@@ -575,7 +559,6 @@ app.delete('/shoppingcart/:productUuid', isAuth, async (req, res) => {
     const shopping_cart_detail = await ShoppingCartDetail.findOne({
       where: { ProductId: product.id, ShoppingCartId: shopping_cart.id }
     })
-
     await shopping_cart_detail.destroy();
     res.json();
   } catch (err) {
@@ -587,8 +570,8 @@ app.delete('/shoppingcart/:productUuid', isAuth, async (req, res) => {
 
 
 //create product to shopping cart
-app.post('/shoppingcartsdetails', isAuth, async (req, res) => {
-  const keys = new Set(["productUuid", "cantidad"]);
+app.post('/shoppingcart/product', isAuth, async (req, res) => {
+  const keys = new Set(["productUuid", "quantity"]);
   try {
     check_fields_front(req.body, keys);
     const user = await User.findOne({
@@ -601,7 +584,7 @@ app.post('/shoppingcartsdetails', isAuth, async (req, res) => {
     const product = await Product.findOne({
       where: { uuid: req.body.productUuid },
     });
-    const shopping_cart_detail = await ShoppingCartDetail.create({ "ShoppingCartId": shopping_cart.id, "ProductId": product.id, cantidad: req.body.cantidad });
+    const shopping_cart_detail = await ShoppingCartDetail.create({ "ShoppingCartId": shopping_cart.id, "ProductId": product.id, quantity: req.body.quantity });
     res.json(shopping_cart_detail);
   } catch (err) {
     console.log(err);
@@ -610,7 +593,29 @@ app.post('/shoppingcartsdetails', isAuth, async (req, res) => {
   return res;
 });
 
+app.put('/shoppingcart/product/change_quantity', isAuth, async (req, res) => {
+  const keys = new Set(["uuid", "quantity"]);
+  try {
+    check_fields_front(req.body, keys);
+    const user = await User.findOne({
+      where: { uuid: req.creds.uuid },
+    });
+    const shopping_cart = await ShoppingCart.findOne({
+      where: { userId: user.id },
+    });
+    const product = await Product.findOne({
+      where: { uuid: req.body.uuid },
+    });
+    const shopping_cart_detail = await ShoppingCartDetail.findOne({where:{ ProductId: product.id, ShoppingCartId: shopping_cart.id }});
+    await shopping_cart_detail.update({ ...shopping_cart_detail, quantity: req.body.quantity })
 
+    res.json(shopping_cart_detail);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err.message);
+  }
+  return res;
+});
 // Valid
 function sum(a, b) {
   return a + b;

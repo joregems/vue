@@ -8,12 +8,8 @@
 <script setup>
 import GenericForm from '@/components/GenericForm.vue';
 import { user_adapter } from '@/stores/UserStore'
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useAuthStore } from '@/stores/AuthStore'
-import axios from '@/axios';
-// import { useInterceptors } from '@/axios';
-// useInterceptors(axios);
-
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const authStore = useAuthStore();
@@ -22,9 +18,6 @@ const form = ref({
   password: '',
 })
 
-function submit(obj) {
-  authStore.$login(obj).catch((error) => { console.log(error) })
-}
 const callback = () => {
   router.push({ name: "home" })
 }

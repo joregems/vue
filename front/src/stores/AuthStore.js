@@ -5,8 +5,6 @@ import { useInterceptors } from '@/axios';
 import { axiosInterceptors } from '@/axios';//not works because this is used on the interceptor to set the bearer
 const is_empty = (obj) => (Object.keys(obj).length === 0);
 
-const NOT_LOGGED = "Not logged"
-
 export const useAuthStore = defineStore('authStore', () => {
   const user = ref({})
   const is_logged = ref(false)
@@ -55,7 +53,6 @@ export const useAuthStore = defineStore('authStore', () => {
   async function $logout() {
     axiosInterceptors.get('logout')
       .then((response) => {
-        // $reset();
       })
       .catch((error) => {
         console.log(error)
@@ -77,30 +74,21 @@ export const useAuthStore = defineStore('authStore', () => {
         console.log(error)
         return false
       })
-    // if (response.data) {
-    //   user.value = response.data
-    //   is_logged.value = true;
-    //   loading.value = false
-    //   res = true;
-    // }
+
   }
 
 
 
-  async function $is_down_conection() {
+  async function $is_down_connection() {
     let status_ = false
     await axiosInterceptors.get('check_connection').then(() => { status_ = false }).catch(() => { status_ = true })
     return status_
   }
 
   async function $refreshToken() {
-    console.log("refresh")
     return axiosInterceptors.post('/refresh')
       .then((res) => {
         return res.data;
-        // const bearer_header = 'Bearer ' + res.data;
-        // alert(bearer_header)
-        // await $set_access_token(bearer_header);
       },(error) => {
         console.log(error);
         return Promise.reject(error)
@@ -108,5 +96,5 @@ export const useAuthStore = defineStore('authStore', () => {
   }
 
 
-  return { user, is_logged, access_token, loading, $set_access_token, $get_access_token, $is_down_conection, $login, $signup, $check_logged, $logout, $reset, $refreshToken }
+  return { user, is_logged, access_token, loading, $set_access_token, $get_access_token, $is_down_connection, $login, $signup, $check_logged, $logout, $reset, $refreshToken }
 })

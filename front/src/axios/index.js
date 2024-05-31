@@ -11,25 +11,21 @@ const refresh = async () => {
   const {access_token} = storeToRefs(authStore)
   return authStore.$refreshToken()
     .then(async (res) => {
-      const bearer_touken = "Bearer " + res;
-      await authStore.$set_access_token(bearer_touken);
+      const bearer_token = "Bearer " + res;
+      await authStore.$set_access_token(bearer_token);
       return},
       (err) => { return Promise.reject(err) })
 }
-const remove_interceptors = (axio, requestIn, responseIn) => {
-  axio.interceptors.request.eject(requestIn);
-  axio.interceptors.response.eject(responseIn);
+const remove_interceptors = (axios_instance, requestIn, responseIn) => {
+  axios_instance.interceptors.request.eject(requestIn);
+  axios_instance.interceptors.response.eject(responseIn);
 
 }
 export const useInterceptors = async (axiosToIntercept) => {
-  console.log("unterceptors")
   const requestIntercept = axiosToIntercept.interceptors.request.use(
     async config => {
-      console.log("intercepter")
       const authStore = useAuthStore();
       const { access_token } = storeToRefs(authStore);
-      // if (!Object.is(access_token.value, undefined))
-      console.log(access_token.value)
       config.headers['Authorization'] = access_token.value;
       return config
     }, (error) => {
@@ -43,39 +39,26 @@ export const useInterceptors = async (axiosToIntercept) => {
   const responseIntercept = axiosToIntercept.interceptors.response.use(
     response => response,
     async (error) => {
-      console.log("responder")
-
       const authStore = useAuthStore();
-      // const { access_token } = storeToRefs(authStore);
       const prevRequest = error?.config;
-      // error?.response?.data?.name == "CookiesSetButNotAccessToken" &&
-      // && error?.response?.status === 401
       if (error?.response?.status === 401 &&
         (error?.response?.data?.name === "AccessTokenNoSet" || error?.response?.data?.name === "ExpiredAccessToken") && !prevRequest?.sent) {
-        console.log("aplie to retry", error)
         await refresh()
         prevRequest.headers['Authorization'] = await authStore.$get_access_token();
-        // remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
         return axiosToIntercept(prevRequest);
       }
       if (prevRequest?.sent && (error?.response?.data?.name === "ExpiredRefreshToken")) {
         remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
         authStore.$logout();
       }
-      else
-        // remove_interceptors(axiosToIntercept, requestIntercept, responseIntercept);
-
       return Promise.reject(error);
     }
   )
 }
+
 //this function doesn't work on authStore, not use there.
 export const axiosInterceptors = (() => {
   const axios_private = axios.create(config["axios"]);
   useInterceptors(axios_private);
   return axios_private;
 })();
-// export const useCheckLogin = async (axios_for_use)=>{
-//   const user = await axios_for_use.post('/check')
-//   const store = useAuthStore();
-// }

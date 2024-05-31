@@ -9,8 +9,7 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/AuthStore'
 import { user_adapter } from '@/stores/UserStore'
 import { useRouter } from 'vue-router'
-// import { useInterceptors } from '@/axios';
-// useInterceptors(axios);
+
 user_adapter.role["disabled"]=true;
 const form = ref({
   email: '',

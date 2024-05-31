@@ -1,57 +1,62 @@
 <template>
-  <v-card v-if="!(typeof card === 'undefined')" class="mx-auto custom-vcard">
-    <figure>
-      <!-- class="align-end custom-image" -->
+  <v-card class="mx-auto" max-width="400">
+    <v-img :src="card.image" gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
+    </v-img>
+    <v-card-title>
+      <h2 class="text-h4">{{card.tittle}}</h2>
 
-      <v-img
-        :src="card.image"
-        gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)">
-      </v-img>
-        <figcaption class="text-white" v-text="card.title"></figcaption>
-        <v-card-subtitle class="text-white" v-text="card.description"></v-card-subtitle>
-
-    </figure>
-    <v-card-actions>
       <v-spacer></v-spacer>
-      <slot name="down">
-        <template v-for="action in card.actions">
-          <v-btn color="surface-variant" :icon="action.icon" size="small" variant="text"
-            @click="action.function"></v-btn>
-        </template>
-      </slot>
-    </v-card-actions>
 
+      <span class="text-h6">{{"$"+card.price}}</span>
+    </v-card-title>
+
+    <v-card-text>
+      {{card.description}}
+    </v-card-text>
+
+    <v-divider class="mx-4"></v-divider>
+
+    <!-- <v-card-text>
+      <span class="subheading">Select size</span>
+
+      <v-chip-group v-model="selection" selected-class="text-deep-purple-accent-4" mandatory>
+        <v-chip v-for="size in sizes" :key="size" :text="size" :value="size" variant="outlined"></v-chip>
+      </v-chip-group>
+    </v-card-text> -->
+    <slot name="footer"></slot>
+      
+    <v-card-actions>
+      <v-btn color="deep-purple-accent-4" :text="card.actions[0]['label']" variant="flat" @click.stop="card.actions[0]['function']" block></v-btn>
+    </v-card-actions>
   </v-card>
 </template>
-<script>
-export default {
-  data: () => ({
-    show: false,
-  }),
-}
-</script>
+
 <script setup>
+import { ref } from 'vue'
 const props = defineProps({
   card: Object
 })
 
 const card = props.card
-// {
-//   image:"https://cdn.vuetifyjs.com/images/cards/sunshine.jpg",
-//   title:"Example"
+const sizes = [
+  '04',
+  '06',
+  '08',
+  '10',
+  '12',
+  '14',
+]
 
-// }
+const selection = ref('08')
 </script>
 
-<style scoped>
-
-/* .custom-vcard {
-  aspect-ratio: 16/9;
-
-
+<script>
+export default {
+  data: () => ({
+    selection: '08',
+    sizes: [
+      '04', '06', '08', '10', '12', '14',
+    ],
+  }),
 }
-.custom-image {
-  object-fit: cover;
-  max-height: 40rem;
-} */
-</style>
+</script>
