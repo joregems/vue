@@ -11,6 +11,5 @@
 </template>
 <script setup>
   const props = defineProps(['connection_down']);
-  const connection_down = props.connection_down
-
+  const connection_down = props.connection_down;
 </script>

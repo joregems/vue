@@ -16,8 +16,8 @@
 
 <script setup>
 import '@/normalize.css'
-import { default as TopNavBar } from './components/TopNavBar.vue';
-import { default as SideNavBar } from '@/components/SideNavBar.vue';
+import { default as TopNavBar } from './components/navigation/TopNavBar.vue';
+import { default as SideNavBar } from '@/components/navigation/SideNavBar.vue';
 import { RouterView } from 'vue-router';
 import '@mdi/font/css/materialdesignicons.css';
 import { ref } from 'vue';

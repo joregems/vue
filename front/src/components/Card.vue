@@ -4,27 +4,14 @@
     </v-img>
     <v-card-title>
       <h2 class="text-h4">{{card.tittle}}</h2>
-
       <v-spacer></v-spacer>
-
       <span class="text-h6">{{"$"+card.price}}</span>
     </v-card-title>
-
     <v-card-text>
       {{card.description}}
     </v-card-text>
-
     <v-divider class="mx-4"></v-divider>
-
-    <!-- <v-card-text>
-      <span class="subheading">Select size</span>
-
-      <v-chip-group v-model="selection" selected-class="text-deep-purple-accent-4" mandatory>
-        <v-chip v-for="size in sizes" :key="size" :text="size" :value="size" variant="outlined"></v-chip>
-      </v-chip-group>
-    </v-card-text> -->
     <slot name="footer"></slot>
-      
     <v-card-actions>
       <v-btn color="deep-purple-accent-4" :text="card.actions[0]['label']" variant="flat" @click.stop="card.actions[0]['function']" block></v-btn>
     </v-card-actions>
@@ -60,3 +47,11 @@ export default {
   }),
 }
 </script>
+<style scoped>
+  .v-img{
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    width:"100%";
+    height:"100%";
+  }
+</style>

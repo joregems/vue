@@ -3,12 +3,12 @@ import { defineStore } from 'pinia'
 import { axiosInterceptors as axios } from '@/axios';
 
 export const product_adapter = {
-  "name": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'nombre del producto' },
-  "description": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'descripción del producto' },
+  "name": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'proct\'s name' },
+  "description": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'proct\'s description' },
   "sku": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'sku' },
-  "categoryId": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'blebleble' },
-  "price": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'precio del producto' },
-  "coverImage": { type: 'file', icon: '', label: 'seleccione una imagen' }
+  "categoryId": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'category id' },
+  "price": { type: 'text', icon: 'mdi-arrow-down-circle-outline', label: 'proct\'s price' },
+  "coverImage": { type: 'file', icon: '', label: 'select an image' }
 };
 
 export const useProductStore = defineStore('productStore', () => {

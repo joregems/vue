@@ -35,6 +35,7 @@ const signIncnf = {
   component: SignIn,
   beforeEnter: [enterSignin]
 }
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -92,6 +93,10 @@ const router = createRouter({
 
   ]
 })
+router.beforeEach((to, from, next) => {
+  document.title = to.name;
+  next();
+});
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();

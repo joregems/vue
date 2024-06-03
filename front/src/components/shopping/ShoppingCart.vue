@@ -5,7 +5,7 @@
   <div class="product-list">
     <div v-for="product in products" :key="product.uuid">
       <br>
-      <ProducItem :product="{
+      <ProductItem :product="{
         ...product, actions: [{
           icon: 'mdi-minus', label: 'remove from shop cart', function: async () => {
             await shoppingCartStore.$delete_product(product);
@@ -13,14 +13,13 @@
         }]
       }">
         <template v-slot:footer><ChangeQuantity :product="product"></ChangeQuantity></template>
-      </ProducItem>
+      </ProductItem>
     </div>
   </div>
 </template>
 
-//
 <script setup>
-import ProducItem from '@/components/shopping/Product/ProducItem.vue'
+import ProductItem from '@/components/shopping/Product/ProductItem.vue'
 import EmptyShoppingCart from '@/components/shopping/EmptyShoppingCart.vue'
 
 import ChangeQuantity from '@/components/shopping/Product/ChangeQuantity.vue'

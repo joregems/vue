@@ -7,11 +7,12 @@ import { storeToRefs } from 'pinia'
 
 const props = defineProps({
   active_sidebar: Boolean,
-  width:String
+  width: String
 });
 
 const appTitle = 'magic';
 const logo = 'https://wilsonclinic.com/wp-content/uploads/2018/12/placeholder-logo-2.png'
+
 const menuLoggedOut = [
   { title: 'Sign In', path: '/signin', icon: 'mdi-lock-open' },
   { title: 'Sign Up', path: '/signup', icon: 'mdi-exit-to-app' }];
@@ -32,14 +33,13 @@ const menuAdmin = [
 <template>
   <v-app-bar prominent>
     <v-app-bar-nav-icon :height="props.width" @click.stop="$emit('toggle')"></v-app-bar-nav-icon>
-    <v-toolbar-title class="d-none d-sm-inline-flex">appTitle</v-toolbar-title>
+    <!-- <v-toolbar-title class="d-none d-sm-inline-flex">appTitle</v-toolbar-title> -->
     <v-avatar :tile="true">
       <v-img alt="Avatar" :src="logo">
       </v-img>
     </v-avatar>
     <v-spacer></v-spacer>
-    <text class="d-none d-sm-block">{{ !Object.is(user.name, undefined) ? user.name + "<->" + user.role :
-      "" }}</text>
+    <text class="d-none d-sm-block">{{ !Object.is(user.name, undefined) ? user.name + "<->" + user.role : "" }}</text>
     <v-spacer></v-spacer>
     <div class="d-xs-inline-block border-md">
       <template v-if="is_logged && user.role === 'admin'" v-for="item in menuAdmin">

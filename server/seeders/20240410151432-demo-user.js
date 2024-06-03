@@ -5,10 +5,11 @@ const {v4:uuidv4} = require('uuid');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const hash = await hashPassword("asasdasd1a!sdasdad!qQ");
+    const static_password = "asasdasd1a!sdasdad!qQ"
+    const hash = await hashPassword(static_password);
     await queryInterface.bulkInsert('User', [{
       uuid: "70adac85-307b-40bc-919f-fe13af763030",
-      name: 'UserAdminExampliniano',
+      name: 'UserAdmin Example',
       password: hash,
       email: "example@admin.com",
       role: "admin",
@@ -17,8 +18,8 @@ module.exports = {
     }], {});
     await queryInterface.bulkInsert('ShoppingCart', [{
       uuid: uuidv4(),
-      name: 'Carrito de Adminiano',
-      description: "Ejte es el carrito de admin adminiano",
+      name: 'Shopping cart\'s UserAdmin',
+      description: "This is a Shopping cart",
       userId:1,
       createdAt: new Date(),
       updatedAt: new Date()

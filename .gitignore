@@ -133,6 +133,9 @@ out
 # Server folder
 front/src/components/examples
 front/src/components/Test
+front/src/components/Test
+front/src/components/Examples.vue
+
 # Front folder, it has an aditional .gitignore
 server/public
 
