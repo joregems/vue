@@ -39,11 +39,11 @@ const signIncnf = {
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: '/upload',
-      name: 'upload',
-      component: ImageUpload,
-    },
+    // {
+    //   path: '/upload',
+    //   name: 'upload',
+    //   component: ImageUpload,
+    // },
     {
       path: '/products/create',
       name: 'createProduct',

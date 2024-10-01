@@ -25,6 +25,8 @@ const menuCommon = [
 const menuAdmin = [
   menuCommon[0],
   { title: 'User List', path: '/userlist', icon: 'mdi-format-list-bulleted-square' },
+  { title: 'Add product', path: 'products/create', icon: 'mdi-package-variant-plus' },
+
   ...menuCommon.slice(-2)
 ];
 

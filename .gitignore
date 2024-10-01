@@ -137,5 +137,5 @@ front/src/components/Test
 front/src/components/Examples.vue
 
 # Front folder, it has an aditional .gitignore
-server/public
+server/public/products/*
 
